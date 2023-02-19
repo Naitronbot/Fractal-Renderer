@@ -66,7 +66,6 @@ function draw() {
     gl.uniform1f(aspectUniform, aspect);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
-    requestAnimationFrame(draw);
 }
 
 function resize() {
@@ -95,22 +94,29 @@ function pxToCanvas(px) {
     return [(2*px[0]/canvas.clientWidth - 1)*aspect, 2*px[1]/canvas.clientHeight - 1];
 }
 
+window.addEventListener("resize", e => {
+    requestAnimationFrame(draw);
+});
+
 let dragging = false;
 canvas.addEventListener("mousedown", e => {
     dragging = true;
     oldpos = [pos[0],pos[1]];
     dragStart = pxToCanvas([e.offsetX,e.offsetY]);
+    requestAnimationFrame(draw);
 });
 canvas.addEventListener("mousemove", e => {
     if (dragging) {
         let curpos = pxToCanvas([e.offsetX,e.offsetY]);
         pos = [oldpos[0] - (curpos[0] - dragStart[0])/logZoom, oldpos[1] + (curpos[1] - dragStart[1])/logZoom];
+        requestAnimationFrame(draw);
     }
 });
 canvas.addEventListener("mouseup", e => {
     dragging = false;
     let endpos = pxToCanvas([e.offsetX,e.offsetY]);
     pos = [oldpos[0] - (endpos[0] - dragStart[0])/logZoom, oldpos[1] + (endpos[1] - dragStart[1])/logZoom];
+    requestAnimationFrame(draw);
 });
 canvas.addEventListener("wheel", e => {
     let zoomPoint = pxToCanvas([e.offsetX,e.offsetY]);
@@ -118,6 +124,7 @@ canvas.addEventListener("wheel", e => {
     zoom += -0.5*Math.sign(e.deltaY);
     logZoom = Math.pow(2, zoom);
     pos = [pos[0] - zoomPoint[0]/logZoom, pos[1] + zoomPoint[1]/logZoom];
+    requestAnimationFrame(draw);
 })
 
 setup();
