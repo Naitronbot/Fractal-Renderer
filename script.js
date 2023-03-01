@@ -3,11 +3,18 @@ const canvas = document.getElementById("webGLCanvas");
 const gl = canvas.getContext("webgl");
 
 let aspect = 1;
-let dragStart = [0,0];
-let oldpos = [0,0];
-let pos = [0,0];
-let zoom = 0;
-let logZoom = 1;
+let view = {
+    zoom: {
+        level: 0,
+        log: 1
+    },
+    offset: {
+        pos: [0,0],
+        old: [0,0],
+        start: [0,0]
+    }
+};
+
 let transformUniform;
 let aspectUniform;
 async function setup() {
@@ -40,7 +47,7 @@ async function setup() {
 
     gl.useProgram(program);
 
-    gl.uniform2fv(transformUniform, pos);
+    gl.uniform2fv(transformUniform, view.offset.pos);
 
     gl.enableVertexAttribArray(transformUniform);
     gl.vertexAttribPointer(transformUniform, 2, gl.FLOAT, false, 0, 0);
@@ -62,7 +69,7 @@ function draw() {
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    gl.uniform3fv(transformUniform, [pos[0], pos[1], logZoom]);
+    gl.uniform3fv(transformUniform, [view.offset.pos[0], view.offset.pos[1], view.zoom.log]);
     gl.uniform1f(aspectUniform, aspect);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -99,32 +106,64 @@ window.addEventListener("resize", e => {
 });
 
 let dragging = false;
-canvas.addEventListener("mousedown", e => {
+function startDrag(coords) {
     dragging = true;
-    oldpos = [pos[0],pos[1]];
-    dragStart = pxToCanvas([e.offsetX,e.offsetY]);
+    view.offset.old = [view.offset.pos[0],view.offset.pos[1]];
+    view.offset.start = pxToCanvas(coords);
     requestAnimationFrame(draw);
-});
-canvas.addEventListener("mousemove", e => {
+}
+function moveDrag(coords) {
     if (dragging) {
-        let curpos = pxToCanvas([e.offsetX,e.offsetY]);
-        pos = [oldpos[0] - (curpos[0] - dragStart[0])/logZoom, oldpos[1] + (curpos[1] - dragStart[1])/logZoom];
+        let curpos = pxToCanvas(coords);
+        view.offset.pos = [view.offset.old[0] - (curpos[0] - view.offset.start[0])/view.zoom.log, view.offset.old[1] + (curpos[1] - view.offset.start[1])/view.zoom.log];
         requestAnimationFrame(draw);
     }
+}
+function stopDrag(coords) {
+    dragging = false;
+    let endpos = pxToCanvas(coords);
+    view.offset.pos = [view.offset.old[0] - (endpos[0] - view.offset.start[0])/view.zoom.log, view.offset.old[1] + (endpos[1] - view.offset.start[1])/view.zoom.log];
+    requestAnimationFrame(draw);
+}
+function zoomScreen(coords, zoomAmt) {
+    let zoomPoint = pxToCanvas(coords);
+    view.offset.pos = [view.offset.pos[0] + zoomPoint[0]/view.zoom.log, view.offset.pos[1] - zoomPoint[1]/view.zoom.log];
+    view.zoom.level += zoomAmt;
+    view.zoom.log = Math.pow(2, view.zoom.level);
+    view.offset.pos = [view.offset.pos[0] - zoomPoint[0]/view.zoom.log, view.offset.pos[1] + zoomPoint[1]/view.zoom.log];
+    requestAnimationFrame(draw);
+}
+
+canvas.addEventListener("mousedown", e => {
+    startDrag([e.offsetX,e.offsetY]);
+});
+canvas.addEventListener("mousemove", e => {
+    moveDrag([e.offsetX,e.offsetY]);
 });
 canvas.addEventListener("mouseup", e => {
-    dragging = false;
-    let endpos = pxToCanvas([e.offsetX,e.offsetY]);
-    pos = [oldpos[0] - (endpos[0] - dragStart[0])/logZoom, oldpos[1] + (endpos[1] - dragStart[1])/logZoom];
-    requestAnimationFrame(draw);
+    stopDrag([e.offsetX,e.offsetY]);
 });
 canvas.addEventListener("wheel", e => {
-    let zoomPoint = pxToCanvas([e.offsetX,e.offsetY]);
-    pos = [pos[0] + zoomPoint[0]/logZoom, pos[1] - zoomPoint[1]/logZoom];
-    zoom += -0.5*Math.sign(e.deltaY);
-    logZoom = Math.pow(2, zoom);
-    pos = [pos[0] - zoomPoint[0]/logZoom, pos[1] + zoomPoint[1]/logZoom];
-    requestAnimationFrame(draw);
-})
+    zoomScreen([e.offsetX,e.offsetY],-0.5*Math.sign(e.deltaY));
+});
+
+canvas.addEventListener("touchstart", e => {
+    let canvasCoords = canvas.getBoundingClientRect();
+    if (e.touches.length === 1) {
+        startDrag([e.targetTouches[0].pageX - canvasCoords.left, e.targetTouches[0].pageY - canvasCoords.top]);
+    }
+});
+canvas.addEventListener("touchmove", e => {
+    let canvasCoords = canvas.getBoundingClientRect();
+    if (e.touches.length === 1) {
+        moveDrag([e.targetTouches[0].pageX - canvasCoords.left, e.targetTouches[0].pageY - canvasCoords.top]);
+    }
+});
+canvas.addEventListener("touchend", e => {
+    let canvasCoords = canvas.getBoundingClientRect();
+    if (e.touches.length === 1) {
+        stopDrag([e.targetTouches[0].pageX - canvasCoords.left, e.targetTouches[0].pageY - canvasCoords.top]);
+    }
+});
 
 setup();
