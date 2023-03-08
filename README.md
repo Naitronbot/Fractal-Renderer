@@ -1,4 +1,4 @@
-# Texture Splicer
+# Fractal Renderer
 
 ## Description
 A WebGL application for rendering 2D fractals. Uses the escape time algorithm with smooth coloring to map interations to hue.
