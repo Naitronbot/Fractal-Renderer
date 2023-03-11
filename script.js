@@ -9,9 +9,11 @@ let view = {
         log: 1
     },
     offset: {
-        pos: [0,0],
-        old: [0,0],
-        start: [0,0]
+        pos: [0,0]
+    },
+    touch: {
+        lastTouch: [0,0],
+        dragging: false
     }
 };
 
@@ -97,6 +99,10 @@ async function makeShader(gl, path, type) {
     gl.deleteShader(shader);
 }
 
+function pxToMath(px) {
+    return [2.0*px[0]/canvas.clientWidth*aspect,2.0*px[1]/canvas.clientHeight]
+}
+
 function pxToCanvas(px) {
     return [(2*px[0]/canvas.clientWidth - 1)*aspect, 2*px[1]/canvas.clientHeight - 1];
 }
@@ -105,24 +111,9 @@ window.addEventListener("resize", e => {
     requestAnimationFrame(draw);
 });
 
-let dragging = false;
-function startDrag(coords) {
-    dragging = true;
-    view.offset.old = [view.offset.pos[0],view.offset.pos[1]];
-    view.offset.start = pxToCanvas(coords);
-    requestAnimationFrame(draw);
-}
 function moveDrag(coords) {
-    if (dragging) {
-        let curpos = pxToCanvas(coords);
-        view.offset.pos = [view.offset.old[0] - (curpos[0] - view.offset.start[0])/view.zoom.log, view.offset.old[1] + (curpos[1] - view.offset.start[1])/view.zoom.log];
-        requestAnimationFrame(draw);
-    }
-}
-function stopDrag(coords) {
-    dragging = false;
-    let endpos = pxToCanvas(coords);
-    view.offset.pos = [view.offset.old[0] - (endpos[0] - view.offset.start[0])/view.zoom.log, view.offset.old[1] + (endpos[1] - view.offset.start[1])/view.zoom.log];
+    let movePos = pxToMath(coords);
+    view.offset.pos = [view.offset.pos[0] - movePos[0]/view.zoom.log, view.offset.pos[1] + movePos[1]/view.zoom.log];
     requestAnimationFrame(draw);
 }
 function zoomScreen(coords, zoomAmt) {
@@ -134,36 +125,31 @@ function zoomScreen(coords, zoomAmt) {
     requestAnimationFrame(draw);
 }
 
-canvas.addEventListener("mousedown", e => {
-    startDrag([e.offsetX,e.offsetY]);
-});
 canvas.addEventListener("mousemove", e => {
-    moveDrag([e.offsetX,e.offsetY]);
-});
-canvas.addEventListener("mouseup", e => {
-    stopDrag([e.offsetX,e.offsetY]);
+    if (e.buttons === 1) {
+        moveDrag([e.movementX,e.movementY]);
+    }
 });
 canvas.addEventListener("wheel", e => {
     zoomScreen([e.offsetX,e.offsetY],-0.5*Math.sign(e.deltaY));
 });
 
-canvas.addEventListener("touchstart", e => {
-    let canvasCoords = canvas.getBoundingClientRect();
-    if (e.touches.length === 1) {
-        startDrag([e.targetTouches[0].pageX - canvasCoords.left, e.targetTouches[0].pageY - canvasCoords.top]);
-    }
-});
 canvas.addEventListener("touchmove", e => {
     let canvasCoords = canvas.getBoundingClientRect();
-    if (e.touches.length === 1) {
-        moveDrag([e.targetTouches[0].pageX - canvasCoords.left, e.targetTouches[0].pageY - canvasCoords.top]);
+    if (!view.touch.dragging) {
+        view.touch.lastTouch = [(e.targetTouches[0].pageX - canvasCoords.left), (e.targetTouches[0].pageY - canvasCoords.top)];
+        view.touch.dragging = true;
     }
+    let touchPos = [(e.targetTouches[0].pageX - canvasCoords.left), (e.targetTouches[0].pageY - canvasCoords.top)];
+    let touchOffset = [touchPos[0] - view.touch.lastTouch[0], touchPos[1] - view.touch.lastTouch[1]];
+    if (e.touches.length === 1) {
+        moveDrag([touchOffset[0], touchOffset[1]]);
+    }
+    view.touch.lastTouch = touchPos;
 });
+
 canvas.addEventListener("touchend", e => {
-    let canvasCoords = canvas.getBoundingClientRect();
-    if (e.touches.length === 1) {
-        stopDrag([e.targetTouches[0].pageX - canvasCoords.left, e.targetTouches[0].pageY - canvasCoords.top]);
-    }
+    view.touch.dragging = false;
 });
 
 setup();
