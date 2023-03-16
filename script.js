@@ -11,8 +11,9 @@ let view = {
     offset: {
         pos: [0,0]
     },
-    touch: {
-        lastTouch: [0,0],
+    pointer: {
+        lastPos: [0,0],
+        lastDist: 0,
         dragging: false
     }
 };
@@ -127,29 +128,56 @@ function zoomScreen(coords, zoomAmt) {
 
 canvas.addEventListener("mousemove", e => {
     if (e.buttons === 1) {
-        moveDrag([e.movementX,e.movementY]);
+        let canvasCoords = canvas.getBoundingClientRect();
+        let clickPos = [(e.clientX - canvasCoords.left), (e.clientY - canvasCoords.top)];
+        if (!view.pointer.dragging) {
+            view.pointer.lastPos = clickPos;
+            view.pointer.dragging = true;
+            return;
+        }
+        let touchOffset = [clickPos[0] - view.pointer.lastPos[0], clickPos[1] - view.pointer.lastPos[1]];
+        moveDrag([touchOffset[0], touchOffset[1]]);
+        view.pointer.lastPos = clickPos;
     }
 });
+canvas.addEventListener("mouseup", e => view.pointer.dragging = false);
+canvas.addEventListener("mousedown", e => view.pointer.dragging = false);
 canvas.addEventListener("wheel", e => {
     zoomScreen([e.offsetX,e.offsetY],-0.5*Math.sign(e.deltaY));
 });
 
-canvas.addEventListener("touchmove", e => {
+function getTouches(e) {
     let canvasCoords = canvas.getBoundingClientRect();
-    if (!view.touch.dragging) {
-        view.touch.lastTouch = [(e.targetTouches[0].pageX - canvasCoords.left), (e.targetTouches[0].pageY - canvasCoords.top)];
-        view.touch.dragging = true;
-    }
-    let touchPos = [(e.targetTouches[0].pageX - canvasCoords.left), (e.targetTouches[0].pageY - canvasCoords.top)];
-    let touchOffset = [touchPos[0] - view.touch.lastTouch[0], touchPos[1] - view.touch.lastTouch[1]];
     if (e.touches.length === 1) {
-        moveDrag([touchOffset[0], touchOffset[1]]);
+        return {center: [(e.targetTouches[0].pageX - canvasCoords.left), (e.targetTouches[0].pageY - canvasCoords.top)], dist: 0};
+    } else {
+        let total = [0, 0];
+        for (let i = 0; i < e.touches.length; i++) {
+            total = [total[0] + (e.targetTouches[i].pageX - canvasCoords.left), total[1] + (e.targetTouches[i].pageY - canvasCoords.top)];
+        }
+        let centerPoint = [total[0]/e.touches.length,total[1]/e.touches.length];
+        let centerDistance = Math.sqrt(Math.pow(centerPoint[0] - (e.targetTouches[0].pageX - canvasCoords.left), 2) + Math.pow(centerPoint[1] - (e.targetTouches[0].pageY - canvasCoords.top), 2));
+        return {center: centerPoint, dist: centerDistance};
     }
-    view.touch.lastTouch = touchPos;
+}
+
+canvas.addEventListener("touchmove", e => {
+    let touches = getTouches(e);
+    if (!view.pointer.dragging) {
+        view.pointer.lastPos = touches.center;
+        view.pointer.dist = touches.dist;
+        view.pointer.dragging = true;
+        return;
+    }
+    let touchOffset = [touches.center[0] - view.pointer.lastPos[0], touches.center[1] - view.pointer.lastPos[1]];
+    moveDrag([touchOffset[0], touchOffset[1]]);
+    console.log(touches.dist - view.pointer.dist);
+    zoomScreen(touches.center, pxToMath([touches.dist - view.pointer.dist,0])[0]);
+    view.pointer.lastPos = touches.center;
+    view.pointer.dist = touches.dist;
 });
 
-canvas.addEventListener("touchend", e => {
-    view.touch.dragging = false;
-});
+canvas.addEventListener("touchstart", e => view.pointer.dragging = false);
+canvas.addEventListener("touchend", e => view.pointer.dragging = false);
 
 setup();

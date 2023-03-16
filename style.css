@@ -15,3 +15,8 @@ body {
     height: 100%;
     margin: 0;
 }
+
+:root {
+    touch-action: pan-x pan-y;
+    height: 100%;
+}
