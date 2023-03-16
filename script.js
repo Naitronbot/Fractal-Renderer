@@ -117,11 +117,21 @@ function moveDrag(coords) {
     view.offset.pos = [view.offset.pos[0] - movePos[0]/view.zoom.log, view.offset.pos[1] + movePos[1]/view.zoom.log];
     requestAnimationFrame(draw);
 }
+
 function zoomScreen(coords, zoomAmt) {
     let zoomPoint = pxToCanvas(coords);
     view.offset.pos = [view.offset.pos[0] + zoomPoint[0]/view.zoom.log, view.offset.pos[1] - zoomPoint[1]/view.zoom.log];
     view.zoom.level += zoomAmt;
-    view.zoom.log = Math.pow(2, view.zoom.level);
+    view.zoom.log = Math.pow(2,view.zoom.level);
+    view.offset.pos = [view.offset.pos[0] - zoomPoint[0]/view.zoom.log, view.offset.pos[1] + zoomPoint[1]/view.zoom.log];
+    requestAnimationFrame(draw);
+}
+
+function scaleScreen(coords, zoomAmt) {
+    let zoomPoint = pxToCanvas(coords);
+    view.offset.pos = [view.offset.pos[0] + zoomPoint[0]/view.zoom.log, view.offset.pos[1] - zoomPoint[1]/view.zoom.log];
+    view.zoom.log *= zoomAmt;
+    view.zoom.level = Math.log2(view.zoom.log);
     view.offset.pos = [view.offset.pos[0] - zoomPoint[0]/view.zoom.log, view.offset.pos[1] + zoomPoint[1]/view.zoom.log];
     requestAnimationFrame(draw);
 }
@@ -171,8 +181,13 @@ canvas.addEventListener("touchmove", e => {
     }
     let touchOffset = [touches.center[0] - view.pointer.lastPos[0], touches.center[1] - view.pointer.lastPos[1]];
     moveDrag([touchOffset[0], touchOffset[1]]);
-    console.log(touches.dist - view.pointer.dist);
-    zoomScreen(touches.center, pxToMath([touches.dist - view.pointer.dist,0])[0]);
+    let zoomFactor;
+    if (view.pointer.dist > 0) {
+        zoomFactor = touches.dist / view.pointer.dist;
+    } else {
+        zoomFactor = 1;
+    }
+    scaleScreen(touches.center, zoomFactor);
     view.pointer.lastPos = touches.center;
     view.pointer.dist = touches.dist;
 });
