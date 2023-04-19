@@ -4,6 +4,7 @@ body {
     width: 100vw;
     height: 100vh;
     overflow: hidden;
+    background-color: #212121;
 }
 
 * {
@@ -11,9 +12,29 @@ body {
 }
 
 #webGLCanvas {
-    width: 100%;
-    height: 100%;
     margin: 0;
+    margin-left: 10%;
+    width: 80%;
+    height: 70%;
+}
+
+.settings-wrapper {
+    width: 80%;
+    height: 30%;
+    margin: 0;
+    margin-left: 10%;
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    padding: 20px;
+} 
+
+#mqInput {
+    font-size: 40px;
+    border: 2px solid black;
+    background-color: #111111;
+    color: #ffffff;
+    caret-color: #ffffff;
 }
 
 :root {

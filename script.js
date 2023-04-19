@@ -108,6 +108,13 @@ function pxToCanvas(px) {
     return [(2*px[0]/canvas.clientWidth - 1)*aspect, 2*px[1]/canvas.clientHeight - 1];
 }
 
+function resetView() {
+    view.zoom.level = 0;
+    view.zoom.log = 1;
+    view.offset.pos = [0,0];
+    requestAnimationFrame(draw);
+}
+
 window.addEventListener("resize", e => {
     requestAnimationFrame(draw);
 });
