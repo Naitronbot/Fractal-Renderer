@@ -1,5 +1,5 @@
 const TOKEN_REGEX = [
-    /^(\d+|\\pi|e|i)/,
+    /^(\d+\.?\d*|\d*\.?\d+|\\pi|e|i)/,
     /^([zc])/,
     /^([\+\-\^]|^\\cdot)/,
     /^\\left(\(|\[|\\\{)/,
@@ -146,17 +146,19 @@ function parse() {
     }
     let stream = new TokenStream(field);
     try {
-        let ast = recursive_parse(stream, 0);
+        let ast = recursiveParse(stream, 0);
+        if (ast instanceof ParseError) {
+            throw ast;
+        }
         ERROR_BOX.innerHTML = "";
-        console.log(ast);
-        setup();
+        return ast;
     } catch(error) {
         if(!(error instanceof ParseError)) { throw error; }
         ERROR_BOX.innerHTML = error.name + ": " + error.message;
     }
 }
 
-function recursive_parse(stream: TokenStream, precedence: number): ParseNode | ParseError {
+function recursiveParse(stream: TokenStream, precedence: number): ParseNode | ParseError {
     let left = stream.next();
     
     // Check for end of input
@@ -171,7 +173,7 @@ function recursive_parse(stream: TokenStream, precedence: number): ParseNode | P
     } else if (left.type === "variable") {
         leftNode = new VariableNode(left.value);
     } else if (left.value === "-") {
-        let next = recursive_parse(stream, 15);
+        let next = recursiveParse(stream, 15);
         if (next instanceof ParseError) {
             throw next;
         }
@@ -219,7 +221,7 @@ function recursive_parse(stream: TokenStream, precedence: number): ParseNode | P
                 throw new ParseError("Parsing Error", `Square roots cannot be empty`);
             }
         } else {
-            inner = recursive_parse(stream, 15);
+            inner = recursiveParse(stream, 15);
             if (inner === null) {
                 throw new ParseError("Parsing Error", `Function ${left.value} must have an argument`);
             }
@@ -254,7 +256,7 @@ function recursive_parse(stream: TokenStream, precedence: number): ParseNode | P
                 return leftNode;
             }
             stream.next();
-            let rightNode = recursive_parse(stream, getPrecedence(next.value));
+            let rightNode = recursiveParse(stream, getPrecedence(next.value));
             if (rightNode instanceof ParseError) {
                 throw new ParseError("Parsing Error", "Exponents cannot be empty");
             }
@@ -264,7 +266,7 @@ function recursive_parse(stream: TokenStream, precedence: number): ParseNode | P
             if (getPrecedence("*") <= precedence) {
                 return leftNode;
             }
-            let rightNode = recursive_parse(stream, getPrecedence("*"));
+            let rightNode = recursiveParse(stream, getPrecedence("*"));
             if (rightNode instanceof ParseError) {
                 throw rightNode;
             }
@@ -285,7 +287,7 @@ function parseGroup(stream: TokenStream, opening: Token | null): ParseNode| Pars
         }
     }
 
-    let inner = recursive_parse(stream, 0);
+    let inner = recursiveParse(stream, 0);
     if (inner === null) {
         throw new ParseError("Parsing Error", `Opening bracket ${opening.value} needs to be closed`);
     }
@@ -314,7 +316,7 @@ function parseLatexGroup(stream: TokenStream, checkOpening: boolean): ParseNode 
         }
     }
 
-    let inner = recursive_parse(stream, 0);
+    let inner = recursiveParse(stream, 0);
     if (inner === null) {
         throw new ParseError("Parsing Error", `Unexpected end of input`);
     }

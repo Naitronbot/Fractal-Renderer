@@ -1,4 +1,5 @@
 const canvas = document.getElementById("webGLCanvas") as HTMLCanvasElement;
+const coordDisplay = document.getElementById("coordDisplay") as HTMLElement;
 const gl = canvas.getContext("webgl")!;
 
 if (gl === null) {
@@ -46,9 +47,9 @@ const viewport = {
 
 let transformUniform: number;
 let aspectUniform: number;
-function setup() {
+function setup(ast: ParseNode) {
     let vertexShader = createVertex();
-    let fragmentShader = createFragment();
+    let fragmentShader = createFragment(ast);
     if (!vertexShader || !fragmentShader) {
         return;
     }
@@ -59,7 +60,7 @@ function setup() {
     gl.linkProgram(program);
 
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        alert(`LINK ERROR: ${gl.getProgramInfoLog(program)}`);
+        console.log(`LINK ERROR: ${gl.getProgramInfoLog(program)}`);
         return;
     }
 
@@ -95,6 +96,7 @@ function draw() {
     gl.uniform1f(aspectUniform, viewport.aspectRatio);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
+    coordDisplay.innerHTML = `Coords: ${viewport.offset.pos.x} + ${viewport.offset.pos.y}i\nZoom: ${viewport.zoom.level}`;
 }
 
 function resize() {
@@ -115,12 +117,12 @@ function createVertex() {
         return shader;
     }
 
-    alert(`ERROR: ${gl.getShaderInfoLog(shader)}`);
+    console.log(`ERROR: ${gl.getShaderInfoLog(shader)}`);
     gl.deleteShader(shader);
 }
 
-function createFragment() {
-    let raw = getFragment();
+function createFragment(ast: ParseNode) {
+    let raw = getFragment(ast);
     let shader = gl.createShader(gl.FRAGMENT_SHADER)!;
     gl.shaderSource(shader, raw);
     gl.compileShader(shader);
@@ -129,7 +131,7 @@ function createFragment() {
         return shader;
     }
 
-    alert(`ERROR: ${gl.getShaderInfoLog(shader)}`);
+    console.log(`ERROR: ${gl.getShaderInfoLog(shader)}`);
     gl.deleteShader(shader);
 }
 

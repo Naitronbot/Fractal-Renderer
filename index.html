@@ -11,7 +11,13 @@
     <script src="mathquill-0.10.1/mathquill.js"></script>
 </head>
 <body>
-    <canvas id="webGLCanvas" width="300px" height="300px"></canvas>
+    <div class="canvas-wrapper">
+        <canvas id="webGLCanvas" width="300px" height="300px"></canvas>
+        <div>
+            <p id="coordDisplay"></p>
+            <button id="resetButton" onclick="resetView()">Reset</button>
+        </div>
+    </div>
     <div class="settings-wrapper">
         <div class="mq-wrapper">
             <div id="mqInput"></div>

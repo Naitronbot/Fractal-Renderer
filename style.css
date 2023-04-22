@@ -13,9 +13,30 @@ body {
 
 #webGLCanvas {
     margin: 0;
+    width: 80vw;
+    height: 70vh;
+}
+
+.canvas-wrapper {
+    width: fit-content;
     margin-left: 10%;
-    width: 80%;
-    height: 70%;
+}
+
+.canvas-wrapper div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0;
+    height: 40px;
+}
+
+.canvas-wrapper button {
+    height: 80%;
+}
+
+#coordDisplay {
+    color: white;
+    white-space: pre-line;
 }
 
 .settings-wrapper {
@@ -26,7 +47,6 @@ body {
     display: flex;
     justify-content: center;
     align-items: baseline;
-    padding: 20px;
 } 
 
 .mq-wrapper {
