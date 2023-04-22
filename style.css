@@ -29,12 +29,25 @@ body {
     padding: 20px;
 } 
 
+.mq-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 #mqInput {
-    font-size: 40px;
+    width: fit-content;
+    font-size: 45px;
     border: 2px solid black;
     background-color: #111111;
     color: #ffffff;
     caret-color: #ffffff;
+}
+
+#errorBox {
+    color: red;
+    font-size: 20px;
+    padding: 10px;
 }
 
 :root {

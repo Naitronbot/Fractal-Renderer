@@ -1,14 +1,15 @@
 const TOKEN_REGEX = [
-    /^\d+|^\\pi|^e|^i/,
-    /^[zc]/,
-    /^[\+\-\^]|^\\cdot/,
-    /^\\left(?:\(|\[|\\\{)/,
-    /^\\right(?:\)|\]|\\\})/,
-    /^\\left\|/,
-    /^\\right\|/,
-    /^{/,
-    /^}/,
-    /^\\[a-zA-Z]+/
+    /^(\d+|\\pi|e|i)/,
+    /^([zc])/,
+    /^([\+\-\^]|^\\cdot)/,
+    /^\\left(\(|\[|\\\{)/,
+    /^\\right(\)|\]|\\\})/,
+    /^\\left(\|)/,
+    /^\\right(\|)/,
+    /^({)/,
+    /^(})/,
+    /^\\operatorname\{([a-zA-Z]+)\}/,
+    /^\\([a-zA-Z]+)/
 ];
 const TOKEN_NAMES = [
     "number",
@@ -20,6 +21,7 @@ const TOKEN_NAMES = [
     "closingAbs",
     "openingLatexGroup",
     "closingLatexGroup",
+    "special",
     "special"
 ];
 const PRECEDENCE: {[op: string]: number} = {
@@ -29,9 +31,10 @@ const PRECEDENCE: {[op: string]: number} = {
     "^": 30
 };
 const BRACKETS: {[open: string]: string} = {
-    "\\left(": "\\right)",
-    "\\left[": "\\right]",
-    "\\left\\{": "\\right\\}"
+    "(": ")",
+    "[": "]",
+    "\\{": "\\}",
+    "|": "|"
 };
 
 class ParseError implements Error {
@@ -85,17 +88,17 @@ class TokenStream {
         }
 
         for (let i in TOKEN_REGEX) {
-            let matchIndex = this.input.match(TOKEN_REGEX[i]);
+            let matchIndex = TOKEN_REGEX[i].exec(this.input);
             if (matchIndex !== null) {
                 this.input = this.input.substring(matchIndex[0].length);
-                if (matchIndex[0] === "\\cdot") {
+                if (matchIndex[1] === "\\cdot") {
                     return new Token(TOKEN_NAMES[i], "*");
                 }
-                return new Token(TOKEN_NAMES[i], matchIndex[0]);
+                return new Token(TOKEN_NAMES[i], matchIndex[1]);
             }
         }
 
-        throw new ParseError("Tokenizing Error", "Unknown symbol: " + this.input.charAt(0));
+        throw new ParseError("Tokenizing Error", "Unknown symbol " + this.input.charAt(0));
     }
 }
 
@@ -136,13 +139,20 @@ class OneOperatorNode {
 }
 
 function parse() {
-    let stream = new TokenStream(MQ_FIELD.latex());
+    let field = MQ_FIELD.latex();
+    if (field === "") {
+        ERROR_BOX.innerHTML = "";
+        return;
+    }
+    let stream = new TokenStream(field);
     try {
         let ast = recursive_parse(stream, 0);
+        ERROR_BOX.innerHTML = "";
         console.log(ast);
+        setup();
     } catch(error) {
         if(!(error instanceof ParseError)) { throw error; }
-        console.log(error.name + ": " + error.message);
+        ERROR_BOX.innerHTML = error.name + ": " + error.message;
     }
 }
 
@@ -160,6 +170,12 @@ function recursive_parse(stream: TokenStream, precedence: number): ParseNode | P
         leftNode = new NumberNode(left.value);
     } else if (left.type === "variable") {
         leftNode = new VariableNode(left.value);
+    } else if (left.value === "-") {
+        let next = recursive_parse(stream, 15);
+        if (next instanceof ParseError) {
+            throw next;
+        }
+        leftNode = new TwoOperatorNode(new NumberNode("0"), "-", next);
     } else if (left.type === "openingGroup") {
         leftNode = parseGroup(stream, left);
     } else if (left.type === "closingGroup") {
@@ -168,7 +184,15 @@ function recursive_parse(stream: TokenStream, precedence: number): ParseNode | P
         leftNode = parseLatexGroup(stream, false);
     } else if (left.type === "closingLatexGroup") {
         return new ParseError("Parsing Error", "Latex groups cannot be empty");
-    } else if (left.value === "\\frac" && left.type === "special") {
+    } else if (left.type === "openingAbs") {
+        let inner = parseGroup(stream, left);
+        if (inner instanceof ParseError) {
+            throw inner;
+        }
+        leftNode = new OneOperatorNode("abs", inner);
+    } else if (left.type === "closingAbs") {
+        return new ParseError("Parsing Error", "Absolute values cannot be empty");
+    } else if (left.value === "frac" && left.type === "special") {
         let numerator = parseLatexGroup(stream, true);
         if (numerator instanceof ParseError) {
             throw new ParseError("Parsing Error", "Numerator of a fraction cannot be empty");
@@ -181,7 +205,7 @@ function recursive_parse(stream: TokenStream, precedence: number): ParseNode | P
     } else if (left.type === "special") {
         let next = stream.peek();
         if (next === null) {
-            throw new ParseError("Parsing Error", `Function ${left.value.slice(1)} must have an argument`);
+            throw new ParseError("Parsing Error", `Function ${left.value} must have an argument`);
         }
         let inner: ParseNode | ParseError;
         if (next.type === "openingGroup") {
@@ -197,7 +221,7 @@ function recursive_parse(stream: TokenStream, precedence: number): ParseNode | P
         } else {
             inner = recursive_parse(stream, 15);
             if (inner === null) {
-                throw new ParseError("Parsing Error", `Function ${left.value.slice(1)} must have an argument`);
+                throw new ParseError("Parsing Error", `Function ${left.value} must have an argument`);
             }
             if (inner instanceof ParseError) {
                 throw inner;
@@ -207,7 +231,7 @@ function recursive_parse(stream: TokenStream, precedence: number): ParseNode | P
     } else if (left.type === "operator") {
         throw new ParseError("Parsing Error", `Unexpected operator: ${left.value}`);
     } else {
-        throw new ParseError("Parsing Error", "Unknown token: " + left.value);
+        throw new ParseError("Parsing Error", "Unknown token " + left.value);
     }
 
     if (leftNode instanceof ParseError) {
@@ -221,7 +245,7 @@ function recursive_parse(stream: TokenStream, precedence: number): ParseNode | P
         if (next === null) {
             return leftNode;
         }
-        if (next.type === "closingGroup" || next.type === "closingLatexGroup") {
+        if (next.type === "closingGroup" || next.type === "closingLatexGroup" || next.type === "closingAbs") {
             return leftNode;
         }
 
@@ -256,14 +280,14 @@ function parseGroup(stream: TokenStream, opening: Token | null): ParseNode| Pars
         if (opening === null) {
             throw new ParseError("Parsing Error", "Unexpected end of input");
         }
-        if (opening.type != "openingGroup") {
+        if (opening.type != "openingGroup" && opening.type != "openingAbs") {
             throw new ParseError("Parsing Error", "Malformed Latex");
         }
     }
 
     let inner = recursive_parse(stream, 0);
     if (inner === null) {
-        throw new ParseError("Parsing Error", `Opening bracket ${opening.value.slice(-1)} needs to be closed`);
+        throw new ParseError("Parsing Error", `Opening bracket ${opening.value} needs to be closed`);
     }
     if (inner instanceof ParseError) {
         return inner;
@@ -271,10 +295,10 @@ function parseGroup(stream: TokenStream, opening: Token | null): ParseNode| Pars
 
     let closing = stream.next();
     if (closing === null) {
-        throw new ParseError("Parsing Error", `Opening bracket ${opening.value.slice(-1)} needs to be closed`);
+        throw new ParseError("Parsing Error", `Opening bracket ${opening.value} needs to be closed`);
     }
     if (closing.value !== BRACKETS[opening.value]) {
-        throw new ParseError("Parsing Error", `Mismatched bracket ${opening.value.slice(-1)} and ${closing.value.slice(-1)}`);
+        throw new ParseError("Parsing Error", `Mismatched bracket ${opening.value} and ${closing.value}`);
     }
     return inner;
 }

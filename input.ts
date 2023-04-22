@@ -10,6 +10,9 @@ const MQ_FIELD = MQ.MathField(MQ_CONTAINER, {
         edit: parse
     }
 });
+const ERROR_BOX = document.getElementById("errorBox") as HTMLElement;
+
+MQ_FIELD.latex("z^{2}+c");
 
 function logLatex() {
     console.log(MQ_FIELD.latex());
@@ -21,10 +24,6 @@ function logTokens() {
     while (tokenStream.hasNext()) {
         let next = tokenStream.next();
         tokens.push(next);
-        if (next instanceof ParseError) {
-            console.log(next.name + ": " + next.message);
-            break;
-        }
     }
     console.log(tokens);
 }

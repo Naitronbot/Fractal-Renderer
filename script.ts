@@ -1,6 +1,10 @@
 const canvas = document.getElementById("webGLCanvas") as HTMLCanvasElement;
 const gl = canvas.getContext("webgl")!;
 
+if (gl === null) {
+    alert("Your browser doesn't support webgl.");
+}
+
 class Point {
     x: number;
     y: number;
@@ -43,10 +47,6 @@ const viewport = {
 let transformUniform: number;
 let aspectUniform: number;
 function setup() {
-    if (gl === null) {
-        alert("Your browser doesn't support webgl.");
-        return;
-    }
     let vertexShader = createVertex();
     let fragmentShader = createFragment();
     if (!vertexShader || !fragmentShader) {
@@ -243,5 +243,3 @@ function getTouches(e: TouchEvent) {
         return {center: centerPoint, dist: centerDistance};
     }
 }
-
-setup();

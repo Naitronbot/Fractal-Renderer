@@ -28,6 +28,10 @@ function getFragment(): string {
     vec2 cs(vec2 z) {
         return vec2(pow(z.x,2.0)-pow(z.y,2.0),2.0*z.x*z.y);
     }
+
+    vec2 f(vec2 z, vec2 c) {
+        return csin(z) + c;
+    }
     
     void main() {
         // Main fractal loop
@@ -40,8 +44,7 @@ function getFragment(): string {
                 iter = float(i);
                 break;
             }
-            z = csin(z) + c;
-            z = vec2(mod(z.x,2.0*pi),z.y);
+            z = f(z, c);
         }
     
         // Adjust iterations for smooth coloring
