@@ -15,18 +15,45 @@
         <canvas id="webGLCanvas" width="300px" height="300px"></canvas>
         <div>
             <p id="coordDisplay"></p>
-            <button id="resetButton" onclick="resetView()">Reset</button>
+            <div>
+                <button id="resetButton" onclick="resetView()"><img src="refresh.svg"></button>
+                <button id="fullscreenButton" onclick="canvas.requestFullscreen()"><img src="fullscreen.svg"></button>
+            </div>
         </div>
     </div>
-    <div class="settings-wrapper">
+    <div class="input-wrapper">
+        <div class="settings-wrapper">
+            <div>
+                <label for="iterationsSlider">Iterations</label>
+                <input id="iterationsSlider" type="range" min="0" max="1000" value="500">
+                <input id="iterationsBox" class="input-box" type="number" value="500">
+            </div>
+            <div>
+                <label for="breakoutSlider">Breakout</label>
+                <input id="breakoutSlider" type="range" min="0.00" step="0.01" max="20000.00" value="10000.00">
+                <input id="breakoutBox" class="input-box" type="number" value="10000.00">
+            </div>
+        </div>
         <div class="mq-wrapper">
             <div id="mqInput"></div>
             <div id="errorBox"></div>
         </div>
+        <div class="render-wrapper">
+            <label for="coloringMode">Coloring Mode</label>
+            <select name="coloring mode" id="coloringMode">
+                <option value="hue">Escape Time Hue</option>
+                <option value="domain">Domain Coloring</option>
+                <option value="grayscale">Escape Time Grayscale</option>
+                <option value="grayscaleInv">Escape Time Grayscale Inverted</option>
+                <option value="bw">Black and White</option>
+                <option value="bwInv">Black and White Inverted</option>
+            </select>
+        </div>
     </div>
     <script src="shaders.js"></script>
-    <script src="script.js"></script>
+    <script src="render.js"></script>
     <script src="parser.js"></script>
     <script src="input.js"></script>
+    <script src="settings.js"></script>
 </body>
 </html>

@@ -42,14 +42,21 @@ const viewport = {
         lastDist: 0,
         dist: 0,
         dragging: false
+    },
+    settings: {
+        iterations: 500,
+        breakout: 10000,
+        coloring: "hue"
     }
 };
 
+let currentAST: ParseNode;
 let transformUniform: number;
 let aspectUniform: number;
-function setup(ast: ParseNode) {
+function setup() {
+
     let vertexShader = createVertex();
-    let fragmentShader = createFragment(ast);
+    let fragmentShader = createFragment();
     if (!vertexShader || !fragmentShader) {
         return;
     }
@@ -121,8 +128,11 @@ function createVertex() {
     gl.deleteShader(shader);
 }
 
-function createFragment(ast: ParseNode) {
-    let raw = getFragment(ast);
+function createFragment() {
+    if (currentAST === null) {
+        throw new Error("WebGL Error: No equation provided");
+    }
+    let raw = getFragment(currentAST, viewport.settings.iterations, viewport.settings.breakout, viewport.settings.coloring);
     let shader = gl.createShader(gl.FRAGMENT_SHADER)!;
     gl.shaderSource(shader, raw);
     gl.compileShader(shader);

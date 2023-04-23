@@ -18,7 +18,8 @@ MQ_FIELD.latex("z^{2}+c");
 function fieldEdit() {
     let ast = parse();
     if (ast) {
-        setup(ast);
+        currentAST = ast;
+        setup();
     }
 }
 
