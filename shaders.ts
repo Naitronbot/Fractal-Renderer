@@ -1,7 +1,10 @@
 const COLORING_MODES: {[mode: string]: string} = {
     "hue":
-        `x = clamp(x,0.0,1.0);
-        vec3 hsl = vec3(360.0 * x, 1.0, 0.5);
+        `if (x >= 1.0 || x <= 0.0) {
+            return vec3(0.0);
+        }
+        float angle = mod(360.0 * x + shift, 360.0);
+        vec3 hsl = vec3(angle, 1.0, 0.5);
         return hsltorgb(hsl);`,
     "grayscaleInv":
         `x = clamp(x,0.0,1.0);
@@ -20,8 +23,16 @@ const COLORING_MODES: {[mode: string]: string} = {
         }
         return vec3(0.0);`,
     "domain":
-        `float angle = 180.0/pi * atan(x.y,x.x);
+        `float angle;
+        if (x == vec2(0.0)) {
+            angle = shift;
+        } else {
+            angle = 180.0/pi * atan(x.y,x.x) + shift;
+        }
         angle = mod(angle,360.0);
+        if (angle >= 360.0 || angle <= 0.0) {
+            angle = shift;
+        }
         vec3 hsl = vec3(angle, 1.0, 0.5);
         return hsltorgb(hsl);`
 };
@@ -65,7 +76,7 @@ function recursiveDecompose(node: ParseNode): string {
     throw new Error("WebGL Error: Unknown node type");
 }
 
-function getFragment(ast: ParseNode, iterations: number, breakout: number, coloring: string): string {
+function getFragment(ast: ParseNode, settings: any): string {
     let functionString = recursiveDecompose(ast);
     return `precision highp float;
     uniform vec3 u_transform;
@@ -74,7 +85,7 @@ function getFragment(ast: ParseNode, iterations: number, breakout: number, color
     varying vec2 pos;
     varying float zoom;
     
-    const int iterations = ${iterations};
+    const int iterations = ${settings.iterations};
     const float e = exp(1.0);
     const float pi = 3.141592653589793;
 
@@ -165,6 +176,11 @@ function getFragment(ast: ParseNode, iterations: number, breakout: number, color
             return vec2(0.0, 0.0);
         }
         return cexp(cm(z2,cln(z1)));
+    }
+
+    vec2 csqrt(vec2 z) {
+        float angle = 0.5*atan(z.y,z.x);
+        return pow(z.x*z.x+z.y*z.y,0.25)*vec2(cos(angle),sin(angle));
     }
 
     // Non algebraic functions
@@ -267,29 +283,63 @@ function getFragment(ast: ParseNode, iterations: number, breakout: number, color
         return carcsin(cd(vec2(1.0,0.0),z));
     }
 
-    vec2 csqrt(vec2 z) {
-        float angle = 0.5*atan(z.y,z.x);
-        return pow(z.x*z.x+z.y*z.y,0.25)*vec2(cos(angle),sin(angle));
+    float p[9];
+    const float epsilon = 1e-07;
+    vec2 cGamma2(vec2 z) {
+        z = z - vec2(1.0,0.0);
+        vec2 x = vec2(p[0],0.0);
+        if (x.y < -1.0) {
+            return vec2(0.0);
+        }
+        for (int i = 1; i < 9; i++) {
+            x += cd(vec2(p[i],0.0),z + vec2(i,0.0));
+        }
+        vec2 t = z + vec2(7.5,0.0);
+        vec2 y = sqrt(2.0*pi) * cm(cm(cpow(t,z+vec2(0.5,0.0)), cexp(-t)), x);
+
+        if (abs(y.y) <= epsilon) {
+            y = vec2(y.x,0.0);
+        }
+        return y;
+    }
+    vec2 cGamma(vec2 z) {
+        if (z.x < 0.5) {
+            return cd(vec2(pi,0.0), cm(csin(pi*z), cGamma2(vec2(1.0,0.0) - z)));
+        }
+        return cGamma2(z);
     }
 
     vec2 f(vec2 z, vec2 c) {
         return ${functionString};
     }
     
-    vec3 color(${coloring !== "domain" ? "float" : "vec2"} x) {
-        //x = pow(x,0.5);
-        ${COLORING_MODES[coloring]}
+    vec3 color(${settings.coloring !== "domain" ? "float" : "vec2"} x) {
+        float shift = ${settings.hueShift.toFixed(2)};
+        
+        ${settings.coloring === "domain" ? "" : `x = pow(x,pow(1.1,${settings.bias.toFixed(2)}));`}
+        ${COLORING_MODES[settings.coloring]}
     }
     
     void main() {
+        // Initialize gamma function constants
+        p[0] = 0.99999999999980993;
+        p[1] = 676.5203681218851;
+        p[2] = -1259.1392167224028;
+        p[3] = 771.32342877765313;
+        p[4] = -176.61502916214059;
+        p[5] = 12.507343278686905;
+        p[6] = -0.13857109526572012;
+        p[7] = 9.9843695780195716e-6;
+        p[8] = 1.5056327351493116e-7;
+
         // Main fractal loop
-        vec2 z = vec2(0.0,0.0);
         vec2 c = uv/u_transform.z + u_transform.xy;
+        vec2 z = ${viewport.settings.julia ? "c" : "vec2(0.0,0.0)"};
         float floatIter = float(iterations);
         float iter = floatIter;
         for (int i = 0; i < iterations; i++) {
-            ${coloring !== "domain" ?
-                    `if (z.x*z.x + z.y*z.y > ${breakout.toFixed(2)}) {
+            ${settings.coloring !== "domain" ?
+                    `if (z.x*z.x + z.y*z.y > ${settings.breakout.toFixed(2)}) {
                         iter = float(i);
                         break;
                     }` : ""
@@ -297,16 +347,16 @@ function getFragment(ast: ParseNode, iterations: number, breakout: number, color
             z = f(z, c);
         }
     
-        // Adjust iterations for smooth coloring
+        ${settings.smooth ? `// Adjust iterations for smooth coloring
         if (iter != floatIter) {
             float log_zn = log(z.x*z.x+z.y*z.y)/2.0;
             float nu = log(log_zn / log(2.0)) / log(2.0);
     
             iter = iter + 1.0 - nu;
-        }
+        }` : ""}
         
         // Output final color
-        gl_FragColor = vec4(color(${coloring !== "domain" ? "iter/floatIter" : "z"}), 1.0);
+        gl_FragColor = vec4(color(${settings.coloring !== "domain" ? "iter/floatIter" : "z"}), 1.0);
     }`;
 }
 

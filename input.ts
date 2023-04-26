@@ -36,3 +36,11 @@ function logTokens() {
     }
     console.log(tokens);
 }
+
+function logGLSL() {
+    console.log(recursiveDecompose(parse()!));
+}
+
+function logShader() {
+    console.log(getFragment(parse()!, viewport.settings));
+}

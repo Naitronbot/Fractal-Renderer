@@ -276,7 +276,7 @@ function recursiveParse(stream: TokenStream, precedence: number): ParseNode | Pa
     }
 }
 
-function parseGroup(stream: TokenStream, opening: Token | null): ParseNode| ParseError {
+function parseGroup(stream: TokenStream, opening: Token | null): ParseNode | ParseError {
     if (opening === null) {
         opening = stream.next();
         if (opening === null) {

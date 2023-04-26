@@ -17,6 +17,7 @@
             <p id="coordDisplay"></p>
             <div>
                 <button id="resetButton" onclick="resetView()"><img src="refresh.svg"></button>
+                <button id="resetButton" onclick="downloadCanvas()"><img src="download.svg"></button>
                 <button id="fullscreenButton" onclick="canvas.requestFullscreen()"><img src="fullscreen.svg"></button>
             </div>
         </div>
@@ -29,9 +30,13 @@
                 <input id="iterationsBox" class="input-box" type="number" value="500">
             </div>
             <div>
-                <label for="breakoutSlider">Breakout</label>
+                <label id="breakoutLabel" for="breakoutSlider">Breakout</label>
                 <input id="breakoutSlider" type="range" min="0.00" step="0.01" max="20000.00" value="10000.00">
                 <input id="breakoutBox" class="input-box" type="number" value="10000.00">
+            </div>
+            <div>
+                <label id="juliaLabel" for="juliaToggle">Julia Mode</label>
+                <input id="juliaToggle" type="checkbox">
             </div>
         </div>
         <div class="mq-wrapper">
@@ -48,6 +53,20 @@
                 <option value="bw">Black and White</option>
                 <option value="bwInv">Black and White Inverted</option>
             </select>
+            <div>
+                <label id="biasLabel" for="biasSlider">Color Bias</label>
+                <input id="biasSlider" type="range" min="-10.00" step="0.01" max="10.00" value="0.00">
+                <input id="biasBox" class="input-box" type="number" value="0.00">
+            </div>
+            <div>
+                <label id="hueShiftLabel" for="biasSlider">Hue Shift</label>
+                <input id="hueShiftSlider" type="range" min="0" step="0.01" max="360.00" value="0.00">
+                <input id="hueShiftBox" class="input-box" type="number" min="0.00" max="360.00" value="0.00">
+            </div>
+            <div>
+                <label id="smoothLabel" for="smoothToggle">Smooth Coloring</label>
+                <input id="smoothToggle" type="checkbox">
+            </div>
         </div>
     </div>
     <script src="shaders.js"></script>

@@ -46,7 +46,11 @@ const viewport = {
     settings: {
         iterations: 500,
         breakout: 10000,
-        coloring: "hue"
+        coloring: "hue",
+        bias: 0,
+        hueShift: 0,
+        julia: false,
+        smooth: false
     }
 };
 
@@ -132,7 +136,7 @@ function createFragment() {
     if (currentAST === null) {
         throw new Error("WebGL Error: No equation provided");
     }
-    let raw = getFragment(currentAST, viewport.settings.iterations, viewport.settings.breakout, viewport.settings.coloring);
+    let raw = getFragment(currentAST, viewport.settings);
     let shader = gl.createShader(gl.FRAGMENT_SHADER)!;
     gl.shaderSource(shader, raw);
     gl.compileShader(shader);
@@ -159,6 +163,23 @@ function resetView() {
     viewport.offset.pos.x = 0;
     viewport.offset.pos.y = 0;
     requestAnimationFrame(draw);
+}
+
+function downloadCanvas() {
+    draw();
+    canvas.toBlob((blob) => {
+        if (blob === null) {
+            throw new Error("Failed to download file");
+        }
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        const url = window.URL.createObjectURL(blob);
+        a.href = url;
+        a.download = "fractal.png";
+        a.click();
+        a.remove();
+    });
 }
 
 window.addEventListener("resize", e => {
