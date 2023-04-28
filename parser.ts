@@ -2,6 +2,7 @@ const TOKEN_REGEX = [
     /^(\d+\.?\d*|\d*\.?\d+|\\pi|e|i)/,
     /^([zc])/,
     /^([\+\-\^]|^\\cdot)/,
+    /^(\_)/,
     /^\\left(\(|\[|\\\{)/,
     /^\\right(\)|\]|\\\})/,
     /^\\left(\|)/,
@@ -15,6 +16,7 @@ const TOKEN_NAMES = [
     "number",
     "variable",
     "operator",
+    "subscript",
     "openingGroup",
     "closingGroup",
     "openingAbs",
@@ -204,34 +206,37 @@ function recursiveParse(stream: TokenStream, precedence: number): ParseNode | Pa
             throw new ParseError("Parsing Error", "Denominator of a fraction cannot be empty");
         }
         leftNode = new TwoOperatorNode(numerator, "/", denominator);
-    } else if (left.type === "special") {
+    } else if (left.value === "log" && left.type === "special") {
         let next = stream.peek();
+        let base: ParseNode = new NumberNode("10");
         if (next === null) {
-            throw new ParseError("Parsing Error", `Function ${left.value} must have an argument`);
+            throw new ParseError("Parsing Error", `Function log must have an argument`);
         }
-        let inner: ParseNode | ParseError;
-        if (next.type === "openingGroup") {
-            inner = parseGroup(stream, null);
-            if (inner instanceof ParseError) {
-                throw inner;
+        if (next.type === "subscript") {
+            stream.next();
+            let subscript = parseLatexGroup(stream, true);
+            if (subscript instanceof ParseError) {
+                throw new ParseError("Parsing Error", "Subscripts cannot be empty");
             }
-        } else if (next.type === "openingLatexGroup") {
-            inner = parseLatexGroup(stream, true);
-            if (inner instanceof ParseError) {
-                throw new ParseError("Parsing Error", `Square roots cannot be empty`);
-            }
-        } else {
-            inner = recursiveParse(stream, 15);
-            if (inner === null) {
-                throw new ParseError("Parsing Error", `Function ${left.value} must have an argument`);
-            }
-            if (inner instanceof ParseError) {
-                throw inner;
-            }
+            base = subscript;
+        }
+
+        let inner = parseFunction(stream, left);
+        if (inner instanceof ParseError) {
+            throw inner;
+        }
+        
+        leftNode = new TwoOperatorNode(inner, "log", base);
+    } else if (left.type === "special") {
+        let inner = parseFunction(stream, left);
+        if (inner instanceof ParseError) {
+            throw inner;
         }
         leftNode = new OneOperatorNode(left.value, inner);
     } else if (left.type === "operator") {
         throw new ParseError("Parsing Error", `Unexpected operator: ${left.value}`);
+    } else if (left.type === "subscript") {
+        throw new ParseError("Parsing Error", `Unexpected subscript`);
     } else {
         throw new ParseError("Parsing Error", "Unknown token " + left.value);
     }
@@ -332,6 +337,34 @@ function parseLatexGroup(stream: TokenStream, checkOpening: boolean): ParseNode 
         throw new ParseError("Parsing Error", `Malformed Latex`);
     }
 
+    return inner;
+}
+
+function parseFunction(stream: TokenStream, left: Token): ParseNode | ParseError {
+    let next = stream.peek();
+    if (next === null) {
+        throw new ParseError("Parsing Error", `Function ${left.value} must have an argument`);
+    }
+    let inner: ParseNode | ParseError;
+    if (next.type === "openingGroup") {
+        inner = parseGroup(stream, null);
+        if (inner instanceof ParseError) {
+            throw inner;
+        }
+    } else if (next.type === "openingLatexGroup") {
+        inner = parseLatexGroup(stream, true);
+        if (inner instanceof ParseError) {
+            throw new ParseError("Parsing Error", `Square roots cannot be empty`);
+        }
+    } else {
+        inner = recursiveParse(stream, 15);
+        if (inner === null) {
+            throw new ParseError("Parsing Error", `Function ${left.value} must have an argument`);
+        }
+        if (inner instanceof ParseError) {
+            throw inner;
+        }
+    }
     return inner;
 }
 

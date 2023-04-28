@@ -12,6 +12,13 @@ const COLORING_MODES: {[mode: string]: string} = {
     "grayscale":
         `x = clamp(x,0.0,1.0);
         return vec3(1.0-x);`,
+    "feny":
+        `x = clamp(x,0.0,1.0);
+        return vec3(0.706+x*0.294,0.690+x*0.310,1.0);`,
+    "fenyEx":
+        `x = clamp(x,0.0,1.0);
+        x = 1.0-x;
+        return vec3(0.706+x*0.294,0.690+x*0.310,1.0);`,
     "bw":
         `if (x >= 1.0) {
             return vec3(0.0);
@@ -65,6 +72,9 @@ function recursiveDecompose(node: ParseNode): string {
         }
         if (node.operator === "^") {
             return `cpow(${recursiveDecompose(node.left)},${recursiveDecompose(node.right)})`;
+        }
+        if (node.operator === "log") {
+            return `clog(${recursiveDecompose(node.left)},${recursiveDecompose(node.right)})`;
         }
     }
     if (node instanceof OneOperatorNode) {
@@ -151,6 +161,10 @@ function getFragment(ast: ParseNode, settings: any): string {
         return vec2(log(length(z)),atan(z.y,z.x));
     }
 
+    vec2 clog(vec2 z, vec2 b) {
+        return cd(cln(z),cln(b));
+    }
+
     vec2 cabs(vec2 z) {
         return vec2(length(z),0.0);
     }
@@ -161,6 +175,10 @@ function getFragment(ast: ParseNode, settings: any): string {
 
     vec2 cexp(vec2 z) {
         return exp(z.x)*vec2(cos(z.y),sin(z.y));
+    }
+
+    vec2 ccis(vec2 z) {
+        return cexp(vec2(-z.y,z.x));
     }
 
     vec2 cpow(vec2 z1, vec2 z2) {

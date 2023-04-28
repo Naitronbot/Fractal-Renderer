@@ -1,39 +1,43 @@
 const ITERATIONS_SLIDER = document.getElementById("iterationsSlider") as HTMLInputElement;
 const ITERATIONS_BOX = document.getElementById("iterationsBox") as HTMLInputElement;
 const BREAKOUT_SLIDER = document.getElementById("breakoutSlider") as HTMLInputElement;
-const BREAKOUT_LABEL = document.getElementById("breakoutLabel") as HTMLInputElement;
+const BREAKOUT_LABEL = document.getElementById("breakoutLabel") as HTMLElement;
 const BREAKOUT_BOX = document.getElementById("breakoutBox") as HTMLInputElement;
 const COLORING_MODE = document.getElementById("coloringMode") as HTMLInputElement;
-const BIAS_BOX = document.getElementById("biasSlider") as HTMLInputElement;
-const BIAS_SLIDER = document.getElementById("biasBox") as HTMLInputElement;
+const BIAS_LABEL = document.getElementById("biasLabel") as HTMLElement;
+const BIAS_BOX = document.getElementById("biasBox") as HTMLInputElement;
+const BIAS_SLIDER = document.getElementById("biasSlider") as HTMLInputElement;
 const HUESHIFT_SLIDER = document.getElementById("hueShiftSlider") as HTMLInputElement;
 const HUESHIFT_BOX = document.getElementById("hueShiftBox") as HTMLInputElement;
 const JULIA_TOGGLE = document.getElementById("juliaToggle") as HTMLInputElement;
+const SMOOTH_LABEL = document.getElementById("smoothLabel") as HTMLElement;
 const SMOOTH_TOGGLE = document.getElementById("smoothToggle") as HTMLInputElement;
+const RECOMP_TOGGLE = document.getElementById("recompToggle") as HTMLInputElement;
+const RECOMP_BUTTON = document.getElementById("recompButton") as HTMLElement;
 
-ITERATIONS_BOX.addEventListener("change", () => {
-    ITERATIONS_SLIDER.value = ITERATIONS_BOX.value;
-    viewport.settings.iterations = parseInt(ITERATIONS_BOX.value);
-    setup();
-});
+function settingSetup(slider: HTMLInputElement, box: HTMLInputElement, setting: string, float: boolean) {
+    slider.addEventListener("change", () => {
+        box.value = slider.value;
+        let num = (float) ? parseFloat(box.value) : parseInt(box.value);
+        if (!isNaN(num)) {
+            viewport.settings[setting] = num;
+        }
+        setup(false);
+    });
+    box.addEventListener("change", () => {
+        let num = (float) ? parseFloat(box.value) : parseInt(box.value);
+        if (!isNaN(num)) {
+            slider.value = num + "";
+            viewport.settings[setting] = num;
+        }
+        setup(false);
+    });
+}
 
-ITERATIONS_SLIDER.addEventListener("change", () => {
-    ITERATIONS_BOX.value = ITERATIONS_SLIDER.value;
-    viewport.settings.iterations = parseInt(ITERATIONS_BOX.value);
-    setup();
-});
-
-BREAKOUT_BOX.addEventListener("change", () => {
-    BREAKOUT_SLIDER.value = BREAKOUT_BOX.value;
-    viewport.settings.breakout = parseInt(BREAKOUT_BOX.value);
-    setup();
-});
-
-BREAKOUT_SLIDER.addEventListener("change", () => {
-    BREAKOUT_BOX.value = BREAKOUT_SLIDER.value;
-    viewport.settings.breakout = parseInt(BREAKOUT_BOX.value);
-    setup();
-});
+settingSetup(ITERATIONS_SLIDER, ITERATIONS_BOX, "iterations", false);
+settingSetup(BREAKOUT_SLIDER, BREAKOUT_BOX, "breakout", true);
+settingSetup(BIAS_SLIDER, BIAS_BOX, "bias", true);
+settingSetup(HUESHIFT_SLIDER, HUESHIFT_BOX, "hueShift", true);
 
 COLORING_MODE.addEventListener("change", () => {
     viewport.settings.coloring = COLORING_MODE.value;
@@ -41,44 +45,38 @@ COLORING_MODE.addEventListener("change", () => {
         BREAKOUT_LABEL.style.color = "#646464";
         BREAKOUT_BOX.disabled = true;
         BREAKOUT_SLIDER.disabled = true;
+        BIAS_LABEL.style.color = "#646464";
+        BIAS_BOX.disabled = true;
+        BIAS_SLIDER.disabled = true;
+        SMOOTH_LABEL.style.color = "#646464";
+        SMOOTH_TOGGLE.disabled = true;
     } else {
         BREAKOUT_LABEL.style.color = "";
         BREAKOUT_BOX.disabled = false;
         BREAKOUT_SLIDER.disabled = false;
+        BIAS_LABEL.style.color = "";
+        BIAS_BOX.disabled = false;
+        BIAS_SLIDER.disabled = false;
+        SMOOTH_LABEL.style.color = "";
+        SMOOTH_TOGGLE.disabled = false;
     }
-    setup();
-});
-
-BIAS_BOX.addEventListener("change", () => {
-    BIAS_SLIDER.value = BIAS_BOX.value;
-    viewport.settings.bias = parseFloat(BIAS_BOX.value);
-    setup();
-});
-
-BIAS_SLIDER.addEventListener("change", () => {
-    BIAS_BOX.value = BIAS_SLIDER.value;
-    viewport.settings.bias = parseFloat(BIAS_BOX.value);
-    setup();
-});
-
-HUESHIFT_BOX.addEventListener("change", () => {
-    HUESHIFT_SLIDER.value = HUESHIFT_BOX.value;
-    viewport.settings.hueShift = parseFloat(HUESHIFT_BOX.value);
-    setup();
-});
-
-HUESHIFT_SLIDER.addEventListener("change", () => {
-    HUESHIFT_BOX.value = HUESHIFT_SLIDER.value;
-    viewport.settings.hueShift = parseFloat(HUESHIFT_BOX.value);
-    setup();
+    setup(false);
 });
 
 JULIA_TOGGLE.addEventListener("change", () => {
     viewport.settings.julia = JULIA_TOGGLE.checked;
-    setup();
+    setup(false);
 });
 
 SMOOTH_TOGGLE.addEventListener("change", () => {
     viewport.settings.smooth = SMOOTH_TOGGLE.checked;
-    setup();
+    setup(false);
+});
+
+RECOMP_TOGGLE.addEventListener("change", () => {
+    if (RECOMP_TOGGLE.checked) {
+        RECOMP_BUTTON.style.display = "";
+    } else {
+        RECOMP_BUTTON.style.display = "none";
+    }
 });

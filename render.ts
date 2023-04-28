@@ -28,7 +28,7 @@ class Point {
     }
 }
 
-const viewport = {
+const viewport: {[key: string]: any} = {
     aspectRatio: 1,
     zoom: {
         level: 0,
@@ -57,7 +57,10 @@ const viewport = {
 let currentAST: ParseNode;
 let transformUniform: number;
 let aspectUniform: number;
-function setup() {
+function setup(manual: boolean) {
+    if (RECOMP_TOGGLE.checked && !manual) {
+        return;
+    }
 
     let vertexShader = createVertex();
     let fragmentShader = createFragment();
@@ -187,50 +190,59 @@ window.addEventListener("resize", e => {
 });
 
 
-canvas.addEventListener("mousemove", e => {
-    if (e.buttons === 1) {
+document.addEventListener("mousemove", e => {
+    if (e.buttons === 1 && viewport.pointer.dragging) {
         let canvasCoords = canvas.getBoundingClientRect();
         let clickPos = new Point(e.clientX - canvasCoords.left, e.clientY - canvasCoords.top);
-        if (!viewport.pointer.dragging) {
-            viewport.pointer.lastPos = clickPos;
-            viewport.pointer.dragging = true;
-            return;
-        }
         let touchOffset = new Point(clickPos.x - viewport.pointer.lastPos.x, clickPos.y - viewport.pointer.lastPos.y);
         moveDrag(touchOffset);
         viewport.pointer.lastPos = clickPos;
     }
 });
-canvas.addEventListener("mouseup", () => viewport.pointer.dragging = false);
-canvas.addEventListener("mousedown", () => viewport.pointer.dragging = false);
+canvas.addEventListener("mousedown", e => {
+    document.body.style.userSelect = "none";
+    let canvasCoords = canvas.getBoundingClientRect();
+    let clickPos = new Point(e.clientX - canvasCoords.left, e.clientY - canvasCoords.top);
+    viewport.pointer.lastPos = clickPos;
+    viewport.pointer.dragging = true;
+});
+document.addEventListener("mouseup", () => {
+    document.body.style.userSelect = "";
+    viewport.pointer.dragging = false;
+});
 canvas.addEventListener("wheel", e => {
     zoomScreen(new Point(e.offsetX,e.offsetY),-0.5*Math.sign(e.deltaY));
 });
 
-canvas.addEventListener("touchmove", e => {
-    let touches = getTouches(e);
-    if (!viewport.pointer.dragging) {
-        viewport.pointer.lastPos = Point.fromArray(touches.center);
+document.addEventListener("touchmove", e => {
+    if (viewport.pointer.dragging) {
+        let touches = getTouches(e);
+        let touchOffset = new Point(touches.center[0] - viewport.pointer.lastPos.x, touches.center[1] - viewport.pointer.lastPos.y);
+        moveDrag(touchOffset);
+        let zoomFactor;
+        if (viewport.pointer.dist > 0) {
+            zoomFactor = touches.dist / viewport.pointer.dist;
+        } else {
+            zoomFactor = 1;
+        }
+        let centerPoint = Point.fromArray(touches.center);
+        scaleScreen(centerPoint, zoomFactor);
+        viewport.pointer.lastPos = centerPoint;
         viewport.pointer.dist = touches.dist;
-        viewport.pointer.dragging = true;
-        return;
     }
-    let touchOffset = new Point(touches.center[0] - viewport.pointer.lastPos.x, touches.center[1] - viewport.pointer.lastPos.y);
-    moveDrag(touchOffset);
-    let zoomFactor;
-    if (viewport.pointer.dist > 0) {
-        zoomFactor = touches.dist / viewport.pointer.dist;
-    } else {
-        zoomFactor = 1;
-    }
-    let centerPoint = Point.fromArray(touches.center);
-    scaleScreen(centerPoint, zoomFactor);
-    viewport.pointer.lastPos = centerPoint;
-    viewport.pointer.dist = touches.dist;
 });
 
-canvas.addEventListener("touchstart", e => viewport.pointer.dragging = false);
-canvas.addEventListener("touchend", e => viewport.pointer.dragging = false);
+canvas.addEventListener("touchstart", e => {
+    document.body.style.userSelect = "none";
+    let touches = getTouches(e);
+    viewport.pointer.lastPos = Point.fromArray(touches.center);
+    viewport.pointer.dist = touches.dist;
+    viewport.pointer.dragging = true;
+});
+document.addEventListener("touchend", e => {
+    document.body.style.userSelect = "";
+    viewport.pointer.dragging = false;
+});
 
 
 function moveDrag(coords: Point) {
