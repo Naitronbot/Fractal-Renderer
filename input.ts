@@ -7,7 +7,7 @@ const MQ_FIELD = MQ.MathField(MQ_CONTAINER, {
     restrictMismatchedBrackets: true,
     autoCommands: 'pi sqrt Gamma',
     // TODO IMPLIMENT LOG
-    autoOperatorNames: 'sin cos tan csc sec cot sinh cosh tanh csch sech coth arg arcsin arccos arctan arccsc arcsec arccot ln log exp cis floor round ceil Re Im',
+    autoOperatorNames: 'sin cos tan csc sec cot sinh cosh tanh csch sech coth arg arcsin arccos arctan arccsc arcsec arccot ln log exp cis floor round ceil conj Re Im',
     supSubsRequireOperand: true,
     handlers: {
         edit: fieldEdit
@@ -15,9 +15,10 @@ const MQ_FIELD = MQ.MathField(MQ_CONTAINER, {
 });
 const ERROR_BOX = document.getElementById("errorBox") as HTMLElement;
 
-MQ_FIELD.latex("z^{2}+c");
+MQ_FIELD.latex(viewport.settings.equation);
 
 function fieldEdit() {
+    viewport.settings.equation = MQ_FIELD.latex();
     fixGrid();
     let ast = parse();
     if (ast) {
@@ -27,11 +28,11 @@ function fieldEdit() {
 }
 
 function logLatex() {
-    console.log(MQ_FIELD.latex());
+    console.log(viewport.settings.equation);
 }
 
 function logTokens() {
-    let tokenStream = new TokenStream(MQ_FIELD.latex());
+    let tokenStream = new TokenStream(viewport.settings.equation);
     let tokens = [];
     while (tokenStream.hasNext()) {
         let next = tokenStream.next();

@@ -16,20 +16,24 @@
         <div>
             <p id="coordDisplay"></p>
             <div>
-                <button id="resetButton" onclick="resetView()"><img src="refresh.svg"></button>
-                <button id="resetButton" onclick="downloadCanvas()"><img src="download.svg"></button>
-                <button id="fullscreenButton" onclick="canvas.requestFullscreen()"><img src="fullscreen.svg"></button>
+                <button title="Reset Offset/Zoom" id="resetButton" onclick="resetView()"><img src="refresh.svg"></button>
+                <button title="Download Screenshot" id="downloadButton" onclick="downloadCanvas()"><img src="download.svg"></button>
+                <div class="share-wrapper">
+                    <div id="sharePopup" style="display: none;"><input id="shareInput" readonly="readonly"><button onclick="SHARE_POPUP.style.display = 'none'"><img src="close.svg"></button></div>
+                    <button title="Get Fractal URL" id="urlButton" onclick="shareURL()"><img src="share.svg"></button>
+                </div>
+                <button title="fullscreen" id="fullscreenButton" onclick="canvas.requestFullscreen()"><img src="fullscreen.svg"></button>
             </div>
         </div>
     </div>
     <div id="inputGrid" class="input-wrapper">
         <div class="settings-wrapper">
             <label for="iterationsSlider">Iterations</label>
-            <input id="iterationsSlider" type="range" min="0" max="1000" value="500">
+            <input id="iterationsSlider" type="range" min="0" max="1000">
             <input id="iterationsBox" class="input-box" type="number" value="500">
             <label id="breakoutLabel" for="breakoutSlider">Breakout</label>
             <input id="breakoutSlider" type="range" min="0.00" step="0.01" max="20000.00" value="10000.00">
-            <input id="breakoutBox" class="input-box" type="number" value="10000.00">
+            <input id="breakoutBox" class="input-box" type="number" value="10000">
             <label id="juliaLabel" for="juliaToggle">Julia Mode</label>
             <input id="juliaToggle" type="checkbox">
         </div>
@@ -47,28 +51,28 @@
         <div class="render-wrapper">
             <label id="coloringLabel" for="coloringMode">Coloring Mode</label>
             <select name="coloring mode" id="coloringMode">
-                <option value="hue">Escape Time Hue</option>
-                <option value="domain">Domain Coloring</option>
-                <option value="grayscale">Escape Time Grayscale</option>
-                <option value="grayscaleInv">Escape Time Grayscale Inverted</option>
-                <option value="feny">Feny</option>
-                <option value="fenyEx">Feny EX </option>
-                <option value="bw">Black and White</option>
-                <option value="bwInv">Black and White Inverted</option>
+                <option value="1">Escape Time Hue</option>
+                <option value="2">Domain Coloring</option>
+                <option value="3">Escape Time Grayscale</option>
+                <option value="4">Escape Time Grayscale Inverted</option>
+                <option value="5">Feny</option>
+                <option value="6">Feny EX </option>
+                <option value="7">Black and White</option>
+                <option value="8">Black and White Inverted</option>
             </select>
             <label id="biasLabel" for="biasSlider">Color Bias</label>
             <input id="biasSlider" type="range" min="-10.00" step="0.01" max="10.00" value="0.00">
-            <input id="biasBox" class="input-box" type="number" value="0.00">
+            <input id="biasBox" class="input-box" type="number" value="0">
             <label id="hueShiftLabel" for="biasSlider">Hue Shift</label>
             <input id="hueShiftSlider" type="range" min="0" step="0.01" max="360.00" value="0.00">
-            <input id="hueShiftBox" class="input-box" type="number" min="0.00" max="360.00" value="0.00">
+            <input id="hueShiftBox" class="input-box" type="number" min="0.00" max="360.00" value="0">
             <label id="smoothLabel" for="smoothToggle">Smooth Coloring</label>
             <input id="smoothToggle" type="checkbox">
         </div>
     </div>
     <script src="shaders.js"></script>
-    <script src="render.js"></script>
     <script src="settings.js"></script>
+    <script src="render.js"></script>
     <script src="parser.js"></script>
     <script src="input.js"></script>
 </body>

@@ -141,7 +141,7 @@ class OneOperatorNode {
 }
 
 function parse() {
-    let field = MQ_FIELD.latex();
+    let field = viewport.settings.equation;
     if (field === "") {
         ERROR_BOX.innerHTML = "";
         return;

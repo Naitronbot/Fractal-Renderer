@@ -16,21 +16,21 @@ const RECOMP_TOGGLE = document.getElementById("recompToggle") as HTMLInputElemen
 const RECOMP_BUTTON = document.getElementById("recompButton") as HTMLElement;
 
 function settingSetup(slider: HTMLInputElement, box: HTMLInputElement, setting: string, float: boolean) {
-    slider.addEventListener("change", () => {
+    slider.addEventListener("input", () => {
         box.value = slider.value;
         let num = (float) ? parseFloat(box.value) : parseInt(box.value);
         if (!isNaN(num)) {
             viewport.settings[setting] = num;
         }
-        setup(false);
+        draw();
     });
-    box.addEventListener("change", () => {
+    box.addEventListener("input", () => {
         let num = (float) ? parseFloat(box.value) : parseInt(box.value);
         if (!isNaN(num)) {
             slider.value = num + "";
             viewport.settings[setting] = num;
         }
-        setup(false);
+        draw();
     });
 }
 
@@ -40,8 +40,12 @@ settingSetup(BIAS_SLIDER, BIAS_BOX, "bias", true);
 settingSetup(HUESHIFT_SLIDER, HUESHIFT_BOX, "hueShift", true);
 
 COLORING_MODE.addEventListener("change", () => {
-    viewport.settings.coloring = COLORING_MODE.value;
-    if (viewport.settings.coloring === "domain") {
+    viewport.settings.coloring = parseInt(COLORING_MODE.value);
+    toggleColoringActive();
+    draw();
+});
+function toggleColoringActive() {
+    if (viewport.settings.coloring === 2) {
         BREAKOUT_LABEL.style.color = "#646464";
         BREAKOUT_BOX.disabled = true;
         BREAKOUT_SLIDER.disabled = true;
@@ -60,17 +64,16 @@ COLORING_MODE.addEventListener("change", () => {
         SMOOTH_LABEL.style.color = "";
         SMOOTH_TOGGLE.disabled = false;
     }
-    setup(false);
-});
+}
 
 JULIA_TOGGLE.addEventListener("change", () => {
     viewport.settings.julia = JULIA_TOGGLE.checked;
-    setup(false);
+    draw();
 });
 
 SMOOTH_TOGGLE.addEventListener("change", () => {
     viewport.settings.smooth = SMOOTH_TOGGLE.checked;
-    setup(false);
+    draw();
 });
 
 RECOMP_TOGGLE.addEventListener("change", () => {

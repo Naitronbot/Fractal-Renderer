@@ -1,9 +1,9 @@
 const canvas = document.getElementById("webGLCanvas") as HTMLCanvasElement;
 const coordDisplay = document.getElementById("coordDisplay") as HTMLElement;
-const gl = canvas.getContext("webgl")!;
+const gl = canvas.getContext("webgl2")!;
 
 if (gl === null) {
-    alert("Your browser doesn't support webgl.");
+    alert("WebGL 2 not supported, please update your browser.");
 }
 
 class Point {
@@ -46,17 +46,79 @@ const viewport: {[key: string]: any} = {
     settings: {
         iterations: 500,
         breakout: 10000,
-        coloring: "hue",
+        coloring: 1,
         bias: 0,
         hueShift: 0,
         julia: false,
-        smooth: false
+        smooth: false,
+        equation: "z^{2}+c"
     }
 };
 
 let currentAST: ParseNode;
 let transformUniform: number;
+let iterationsUniform: number;
+let breakoutUniform: number;
+let biasUniform: number;
+let hueShiftUniform: number;
+let togglesUniform: number;
 let aspectUniform: number;
+let colorUniform: number;
+
+loadQueryParams();
+
+const enum paramTypes {string, bool, num, offset, zoom}
+function loadQueryParams() {
+    const queryParams = new URLSearchParams(window.location.search);
+    setParam(queryParams, paramTypes.string, 'eq', 'equation');
+    setParam(queryParams, paramTypes.num, 'it', 'iterations');
+    setParam(queryParams, paramTypes.num, 'bk', 'breakout');
+    setParam(queryParams, paramTypes.bool, 'jm', 'julia');
+    setParam(queryParams, paramTypes.num, 'cm', 'coloring');
+    setParam(queryParams, paramTypes.num, 'cb', 'bias');
+    setParam(queryParams, paramTypes.num, 'hs', 'hueShift');
+    setParam(queryParams, paramTypes.bool, 'sm', 'smooth');
+    setParam(queryParams, paramTypes.offset, 'px', 'x');
+    setParam(queryParams, paramTypes.offset, 'py', 'y');
+    setParam(queryParams, paramTypes.zoom, 'zm', 'level/log');
+    setDefaults();
+}
+
+function setParam(params: URLSearchParams, type: paramTypes, param: string, setting: string) {
+    const currentParam = params.get(param);
+    if (currentParam === null) {
+        return;
+    }
+    if (type === paramTypes.string) {
+        viewport.settings[setting!] = decodeURI(currentParam);
+    } else if (type === paramTypes.bool) {
+        viewport.settings[setting!] = currentParam === '1' ? 1 : 0;
+    } else if (type === paramTypes.num) {
+        viewport.settings[setting!] = parseFloat(currentParam);
+    } else if (type === paramTypes.offset) {
+        viewport.offset.pos[setting!] = parseFloat(currentParam);
+    } else if (type === paramTypes.zoom) {
+        const zoom = parseFloat(currentParam)
+        viewport.zoom.level = zoom;
+        viewport.zoom.log = Math.pow(2,viewport.zoom.level);
+    }
+}
+
+function setDefaults() {
+    ITERATIONS_SLIDER.value = viewport.settings.iterations;
+    ITERATIONS_BOX.value = viewport.settings.iterations;
+    BREAKOUT_SLIDER.value = viewport.settings.breakout;
+    BREAKOUT_BOX.value = viewport.settings.breakout;
+    JULIA_TOGGLE.checked = viewport.settings.julia;
+    SMOOTH_TOGGLE.checked = viewport.settings.smooth;
+    HUESHIFT_SLIDER.value = viewport.settings.hueShift;
+    HUESHIFT_BOX.value = viewport.settings.hueShift;
+    BIAS_SLIDER.value = viewport.settings.bias;
+    BIAS_BOX.value = viewport.settings.bias;
+    COLORING_MODE.value = viewport.settings.coloring;
+    toggleColoringActive();
+}
+
 function setup(manual: boolean) {
     if (RECOMP_TOGGLE.checked && !manual) {
         return;
@@ -77,17 +139,17 @@ function setup(manual: boolean) {
         console.log(`LINK ERROR: ${gl.getProgramInfoLog(program)}`);
         return;
     }
-
     transformUniform = gl.getUniformLocation(program, "u_transform")! as number;
+    iterationsUniform = gl.getUniformLocation(program, "u_iterations")! as number;
+    breakoutUniform = gl.getUniformLocation(program, "u_breakout")! as number;
+    biasUniform = gl.getUniformLocation(program, "u_bias")! as number;
+    hueShiftUniform = gl.getUniformLocation(program, "u_hueShift")! as number;
+    togglesUniform = gl.getUniformLocation(program, "u_toggles")! as number;
     aspectUniform = gl.getUniformLocation(program, "u_aspect")! as number;
+    colorUniform = gl.getUniformLocation(program, "u_color")! as number;
     let posAttrib = gl.getAttribLocation(program, "a_position");
 
     gl.useProgram(program);
-
-    gl.uniform2fv(transformUniform, viewport.offset.pos.toArray());
-
-    gl.enableVertexAttribArray(transformUniform);
-    gl.vertexAttribPointer(transformUniform, 2, gl.FLOAT, false, 0, 0);
 
     let vertexData = [-1, -1, -1, 1, 1, 1, -1, -1, 1, 1, 1, -1];
     let posBuffer = gl.createBuffer();
@@ -107,6 +169,12 @@ function draw() {
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     gl.uniform3fv(transformUniform, [viewport.offset.pos.x, viewport.offset.pos.y, viewport.zoom.log]);
+    gl.uniform1i(iterationsUniform, viewport.settings.iterations);
+    gl.uniform1i(togglesUniform, viewport.settings.julia + 2*viewport.settings.smooth);
+    gl.uniform1i(colorUniform, viewport.settings.coloring);
+    gl.uniform1f(breakoutUniform, viewport.settings.breakout);
+    gl.uniform1f(biasUniform, viewport.settings.bias);
+    gl.uniform1f(hueShiftUniform, viewport.settings.hueShift);
     gl.uniform1f(aspectUniform, viewport.aspectRatio);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -185,7 +253,33 @@ function downloadCanvas() {
     });
 }
 
+function getURL() {
+    setup(true);
+    let base = window.location.href.split("?")[0];
+    base += `?eq=${encodeURIComponent(viewport.settings.equation)}`;
+    base += `&it=${viewport.settings.iterations}`;
+    base += `&bk=${viewport.settings.breakout}`;
+    base += `&jm=${viewport.settings.julia+0}`;
+    base += `&cm=${viewport.settings.coloring}`;
+    base += `&cb=${viewport.settings.bias}`;
+    base += `&hs=${viewport.settings.hueShift}`;
+    base += `&sm=${viewport.settings.smooth+0}`;
+    base += `&px=${viewport.offset.pos.x}`;
+    base += `&py=${viewport.offset.pos.y}`;
+    base += `&zm=${viewport.zoom.level}`;
+    return base;
+}
+
+const SHARE_POPUP = document.getElementById("sharePopup") as HTMLElement;
+const SHARE_INPUT = document.getElementById("shareInput") as HTMLInputElement;
+function shareURL() {
+    SHARE_POPUP.style.display = "flex";
+    SHARE_INPUT.value = getURL();
+    SHARE_INPUT.select();
+}
+
 window.addEventListener("resize", e => {
+    fixGrid();
     requestAnimationFrame(draw);
 });
 
