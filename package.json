@@ -1,0 +1,22 @@
+{
+  "name": "fractal-renderer",
+  "version": "0.1.0",
+  "description": "A",
+  "main": "",
+  "scripts": {
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Naitronbot/Fractal-Renderer.git"
+  },
+  "author": "Naitronbomb",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Naitronbot/Fractal-Renderer/issues"
+  },
+  "homepage": "https://github.com/Naitronbot/Fractal-Renderer#readme",
+  "devDependencies": {
+    "typescript": "^5.0.4"
+  }
+}
