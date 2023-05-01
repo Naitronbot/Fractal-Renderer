@@ -316,7 +316,7 @@ document.addEventListener("mouseup", () => {
     viewport.pointer.dragging = false;
 });
 canvas.addEventListener("wheel", e => {
-    zoomScreen(new Point(e.offsetX,e.offsetY),-0.5*Math.sign(e.deltaY));
+    zoomScreen(new Point(e.offsetX,e.offsetY),-0.002*e.deltaY);
     requestAnimationFrame(draw);
 });
 
