@@ -2,6 +2,7 @@ declare const MathQuill: any;
 const MQ = MathQuill.getInterface(2);
 const MQ_CONTAINER = document.getElementById("mqInput");
 const INPUT_GRID = document.getElementById("inputGrid");
+const CANVAS_WRAPPER = document.getElementById("canvasWrapper");
 const INPUT_ELEMENTS = INPUT_GRID?.children as HTMLCollection;
 const MQ_FIELD = MQ.MathField(MQ_CONTAINER, {
     restrictMismatchedBrackets: true,
@@ -15,6 +16,11 @@ const MQ_FIELD = MQ.MathField(MQ_CONTAINER, {
 });
 
 MQ_FIELD.latex(viewport.settings.equation);
+MQ_CONTAINER?.addEventListener("keypress", e => {
+    if (e.key === "Enter") {
+        setup(true);
+    }
+});
 
 function fieldEdit() {
     viewport.settings.equation = MQ_FIELD.latex();
@@ -55,7 +61,9 @@ function fixGrid() {
     let totalWidth = INPUT_ELEMENTS[0].clientWidth + INPUT_ELEMENTS[1].clientWidth + INPUT_ELEMENTS[2].clientWidth;
     if (totalWidth > canvas.clientWidth) {
         INPUT_GRID?.classList.add("input-correction");
+        CANVAS_WRAPPER?.classList.add("input-correction");
     } else {
         INPUT_GRID?.classList.remove("input-correction");
+        CANVAS_WRAPPER?.classList.remove("input-correction");
     }
 }
