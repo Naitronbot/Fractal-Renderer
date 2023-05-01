@@ -13,13 +13,14 @@ body {
 
 #webGLCanvas {
     margin: 0;
-    width: 80vw;
+    width: 100%;
     height: 70vh;
 }
 
 .canvas-wrapper {
     width: fit-content;
     margin-left: 10%;
+    width: 80vw;
 }
 
 .canvas-wrapper div {
@@ -28,6 +29,7 @@ body {
     align-items: center;
     margin: 0;
     height: 50px;
+    max-width: 100%;
 }
 
 button {
@@ -61,11 +63,12 @@ button {
 #coordDisplay {
     color: white;
     white-space: pre-line;
+    max-width: 50%;
 }
 
 .input-wrapper {
-    width: 80%;
-    height: 30%;
+    width: 80vw;
+    height: calc(30vh - 80px);
     margin: 10px;
     margin-left: 10%;
     display: grid;
@@ -119,6 +122,7 @@ input[disabled] {
     width: fit-content;
     flex-direction: column;
     align-items: center;
+    gap: 10px;
 }
 
 #mqInput {
@@ -133,6 +137,7 @@ input[disabled] {
 
 #errorBox {
     color: red;
+    background-color: #111111;
     font-size: 20px;
     padding: 10px;
 }
@@ -193,7 +198,43 @@ input[disabled] {
     margin-left: 5px
 }
 
+#smoothToggle, #juliaToggle {
+    justify-self: start;
+    width: auto;
+}
+
 :root {
     touch-action: pan-x pan-y;
     height: 100%;
+}
+
+@media (max-width: 800px) {
+    .input-wrapper {
+        grid-template-columns: 100%;
+        grid-template-rows: 1fr 1fr 1fr;
+        overflow-y: scroll;
+    } 
+
+    .mq-wrapper {
+        grid-column: 1 !important;
+        grid-row: 1 !important;
+    }
+
+    .settings-wrapper {
+        grid-column: 1 !important;
+        grid-row: 2 !important;
+    }
+
+    .render-wrapper {
+        grid-column: 1 !important;
+        grid-row: 3 !important;
+    }
+
+    #coordDisplay {
+        font-size: 10px;
+    }
+
+    button {
+        height: 50%;
+    }
 }

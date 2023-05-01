@@ -140,10 +140,12 @@ class OneOperatorNode {
     } 
 }
 
+const ERROR_BOX = document.getElementById("errorBox") as HTMLElement;
 function parse() {
     let field = viewport.settings.equation;
     if (field === "") {
         ERROR_BOX.innerHTML = "";
+        ERROR_BOX.style.display = "none";
         return;
     }
     let stream = new TokenStream(field);
@@ -153,10 +155,12 @@ function parse() {
             throw ast;
         }
         ERROR_BOX.innerHTML = "";
+        ERROR_BOX.style.display = "none";
         return ast;
     } catch(error) {
         if(!(error instanceof ParseError)) { throw error; }
         ERROR_BOX.innerHTML = error.name + ": " + error.message;
+        ERROR_BOX.style.display = "";
     }
 }
 
@@ -210,7 +214,7 @@ function recursiveParse(stream: TokenStream, precedence: number): ParseNode | Pa
         let next = stream.peek();
         let base: ParseNode = new NumberNode("10");
         if (next === null) {
-            throw new ParseError("Parsing Error", `Function log must have an argument`);
+            throw new ParseError("Parsing Error", `Function \'log\' must have an argument`);
         }
         if (next.type === "subscript") {
             stream.next();
@@ -343,7 +347,7 @@ function parseLatexGroup(stream: TokenStream, checkOpening: boolean): ParseNode 
 function parseFunction(stream: TokenStream, left: Token): ParseNode | ParseError {
     let next = stream.peek();
     if (next === null) {
-        throw new ParseError("Parsing Error", `Function ${left.value} must have an argument`);
+        throw new ParseError("Parsing Error", `Function \'${left.value}\' must have an argument`);
     }
     let inner: ParseNode | ParseError;
     if (next.type === "openingGroup") {
@@ -359,7 +363,7 @@ function parseFunction(stream: TokenStream, left: Token): ParseNode | ParseError
     } else {
         inner = recursiveParse(stream, 15);
         if (inner === null) {
-            throw new ParseError("Parsing Error", `Function ${left.value} must have an argument`);
+            throw new ParseError("Parsing Error", `Function \'${left.value}\' must have an argument`);
         }
         if (inner instanceof ParseError) {
             throw inner;

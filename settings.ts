@@ -13,6 +13,7 @@ const JULIA_TOGGLE = document.getElementById("juliaToggle") as HTMLInputElement;
 const SMOOTH_LABEL = document.getElementById("smoothLabel") as HTMLElement;
 const SMOOTH_TOGGLE = document.getElementById("smoothToggle") as HTMLInputElement;
 const RECOMP_TOGGLE = document.getElementById("recompToggle") as HTMLInputElement;
+const FAD_TOGGLE = document.getElementById("fadToggle") as HTMLInputElement;
 const RECOMP_BUTTON = document.getElementById("recompButton") as HTMLElement;
 
 function settingSetup(slider: HTMLInputElement, box: HTMLInputElement, setting: string, float: boolean) {
@@ -22,7 +23,7 @@ function settingSetup(slider: HTMLInputElement, box: HTMLInputElement, setting: 
         if (!isNaN(num)) {
             viewport.settings[setting] = num;
         }
-        draw();
+        requestAnimationFrame(draw);
     });
     box.addEventListener("input", () => {
         let num = (float) ? parseFloat(box.value) : parseInt(box.value);
@@ -30,7 +31,7 @@ function settingSetup(slider: HTMLInputElement, box: HTMLInputElement, setting: 
             slider.value = num + "";
             viewport.settings[setting] = num;
         }
-        draw();
+        requestAnimationFrame(draw);
     });
 }
 
@@ -42,7 +43,7 @@ settingSetup(HUESHIFT_SLIDER, HUESHIFT_BOX, "hueShift", true);
 COLORING_MODE.addEventListener("change", () => {
     viewport.settings.coloring = parseInt(COLORING_MODE.value);
     toggleColoringActive();
-    draw();
+    requestAnimationFrame(draw);
 });
 function toggleColoringActive() {
     if (viewport.settings.coloring === 2) {
@@ -68,12 +69,12 @@ function toggleColoringActive() {
 
 JULIA_TOGGLE.addEventListener("change", () => {
     viewport.settings.julia = JULIA_TOGGLE.checked;
-    draw();
+    requestAnimationFrame(draw);
 });
 
 SMOOTH_TOGGLE.addEventListener("change", () => {
     viewport.settings.smooth = SMOOTH_TOGGLE.checked;
-    draw();
+    requestAnimationFrame(draw);
 });
 
 RECOMP_TOGGLE.addEventListener("change", () => {
@@ -82,4 +83,14 @@ RECOMP_TOGGLE.addEventListener("change", () => {
     } else {
         RECOMP_BUTTON.style.display = "none";
     }
+});
+
+FAD_TOGGLE.addEventListener("change", () => {
+    if (FAD_TOGGLE.checked) {
+        viewport.settings.fad = true;
+    } else {
+        viewport.offset.angle = 0;
+        viewport.settings.fad = false;
+    }
+    requestAnimationFrame(draw);
 });

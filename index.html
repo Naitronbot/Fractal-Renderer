@@ -22,20 +22,20 @@
                     <div id="sharePopup" style="display: none;"><input id="shareInput" readonly="readonly"><button onclick="SHARE_POPUP.style.display = 'none'"><img src="close.svg"></button></div>
                     <button title="Get Fractal URL" id="urlButton" onclick="shareURL()"><img src="share.svg"></button>
                 </div>
-                <button title="fullscreen" id="fullscreenButton" onclick="canvas.requestFullscreen()"><img src="fullscreen.svg"></button>
+                <button title="Fullscreen" id="fullscreenButton" onclick="canvas.requestFullscreen()"><img src="fullscreen.svg"></button>
             </div>
         </div>
     </div>
     <div id="inputGrid" class="input-wrapper">
         <div class="settings-wrapper">
-            <label for="iterationsSlider">Iterations</label>
-            <input id="iterationsSlider" type="range" min="0" max="1000">
-            <input id="iterationsBox" class="input-box" type="number" value="500">
-            <label id="breakoutLabel" for="breakoutSlider">Breakout</label>
-            <input id="breakoutSlider" type="range" min="0.00" step="0.01" max="20000.00" value="10000.00">
-            <input id="breakoutBox" class="input-box" type="number" value="10000">
-            <label id="juliaLabel" for="juliaToggle">Julia Mode</label>
-            <input id="juliaToggle" type="checkbox">
+            <label title="How many iterations of the function will be run" for="iterationsSlider">Iterations</label>
+            <input title="How many iterations of the function will be run" id="iterationsSlider" type="range" min="0" max="1000">
+            <input title="How many iterations of the function will be run" id="iterationsBox" class="input-box" type="number" value="500">
+            <label title="The magnitude in which a point will be considered outside the fractal" id="breakoutLabel" for="breakoutSlider">Breakout</label>
+            <input title="The magnitude in which a point will be considered outside the fractal" id="breakoutSlider" type="range" min="0.00" step="0.01" max="20000.00" value="10000.00">
+            <input title="The magnitude in which a point will be considered outside the fractal" id="breakoutBox" class="input-box" type="number" value="10000">
+            <label title="Makes z start as the position of the current pixel instead of zero" id="juliaLabel" for="juliaToggle">Julia Mode</label>
+            <input title="Makes z start as the position of the current pixel instead of zero" id="juliaToggle" type="checkbox">
         </div>
         <div class="mq-wrapper">
             <div class="mq-inner">
@@ -43,10 +43,14 @@
                 <button id="recompButton" onclick="setup(true)" style="display: none;"><img src="done.svg"></button>
             </div>
             <div>
-                <label id="recompLabel" for="smoothToggle">Manual Recompile</label>
-                <input id="recompToggle" type="checkbox">
+                <label title="Make rendering the fractal happen on button press, instead of whenever the equation is edited" id="recompLabel" for="recompToggle">Manual Recompile</label>
+                <input title="Make rendering the fractal happen on button press, instead of whenever the equation is edited" id="recompToggle" type="checkbox">
             </div>
-            <div id="errorBox"></div>
+            <div>
+                <label title="Allow for rotation of the canvas on touchscreen devices (why)" id="fadLabel" for="fadToggle">Fad Mode</label>
+                <input title="Allow for rotation of the canvas on touchscreen devices (why)" id="fadToggle" type="checkbox">
+            </div>
+            <div id="errorBox" style="display: none;"></div>
         </div>
         <div class="render-wrapper">
             <label id="coloringLabel" for="coloringMode">Coloring Mode</label>
@@ -60,14 +64,14 @@
                 <option value="7">Black and White</option>
                 <option value="8">Black and White Inverted</option>
             </select>
-            <label id="biasLabel" for="biasSlider">Color Bias</label>
-            <input id="biasSlider" type="range" min="-10.00" step="0.01" max="10.00" value="0.00">
-            <input id="biasBox" class="input-box" type="number" value="0">
-            <label id="hueShiftLabel" for="biasSlider">Hue Shift</label>
-            <input id="hueShiftSlider" type="range" min="0" step="0.01" max="360.00" value="0.00">
-            <input id="hueShiftBox" class="input-box" type="number" min="0.00" max="360.00" value="0">
-            <label id="smoothLabel" for="smoothToggle">Smooth Coloring</label>
-            <input id="smoothToggle" type="checkbox">
+            <label title="Raises final escape time to 1.1^bias" id="biasLabel" for="biasSlider">Color Bias</label>
+            <input title="Raises final escape time to 1.1^bias" id="biasSlider" type="range" min="-10.00" step="0.01" max="10.00" value="0.00">
+            <input title="Raises final escape time to 1.1^bias" id="biasBox" class="input-box" type="number" value="0">
+            <label title="Adjusts the hue by rotating it on the color wheel" id="hueShiftLabel" for="biasSlider">Hue Shift</label>
+            <input title="Adjusts the hue by rotating it on the color wheel" id="hueShiftSlider" type="range" min="0" step="0.01" max="360.00" value="0.00">
+            <input title="Adjusts the hue by rotating it on the color wheel" id="hueShiftBox" class="input-box" type="number" min="0.00" max="360.00" value="0">
+            <label title="Ajust iteration count to make transition between iterations smoother (might break on non-mandelbrot fractals)" id="smoothLabel" for="smoothToggle">Smooth Coloring</label>
+            <input title="Ajust iteration count to make transition between iterations smoother (might break on non-mandelbrot fractals)" id="smoothToggle" type="checkbox">
         </div>
     </div>
     <script src="shaders.js"></script>

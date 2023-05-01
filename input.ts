@@ -13,7 +13,6 @@ const MQ_FIELD = MQ.MathField(MQ_CONTAINER, {
         edit: fieldEdit
     }
 });
-const ERROR_BOX = document.getElementById("errorBox") as HTMLElement;
 
 MQ_FIELD.latex(viewport.settings.equation);
 
@@ -50,6 +49,9 @@ function logShader() {
 }
 
 function fixGrid() {
+    if (window.innerWidth <= 800) {
+        return;
+    }
     let totalWidth = INPUT_ELEMENTS[0].clientWidth + INPUT_ELEMENTS[1].clientWidth + INPUT_ELEMENTS[2].clientWidth;
     if (totalWidth > canvas.clientWidth) {
         INPUT_GRID?.classList.add("input-correction");

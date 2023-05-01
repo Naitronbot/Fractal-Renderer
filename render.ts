@@ -35,12 +35,14 @@ const viewport: {[key: string]: any} = {
         log: 1
     },
     offset: {
-        pos: new Point(0,0)
+        pos: new Point(0,0),
+        angle: 0
     },
     pointer: {
         lastPos: new Point(0,0),
         lastDist: 0,
         dist: 0,
+        lastAngle: 0,
         dragging: false
     },
     settings: {
@@ -51,6 +53,7 @@ const viewport: {[key: string]: any} = {
         hueShift: 0,
         julia: false,
         smooth: false,
+        fad: false,
         equation: "z^{2}+c"
     }
 };
@@ -63,6 +66,7 @@ let biasUniform: number;
 let hueShiftUniform: number;
 let togglesUniform: number;
 let aspectUniform: number;
+let angleUniform: number;
 let colorUniform: number;
 
 loadQueryParams();
@@ -70,6 +74,10 @@ loadQueryParams();
 const enum paramTypes {string, bool, num, offset, zoom}
 function loadQueryParams() {
     const queryParams = new URLSearchParams(window.location.search);
+    let iter = queryParams.get('it');
+    if (iter !== null && parseInt(iter) > 1000 && !confirm(`High iteration count detected (${iter}), this may lag, would you like to proceed anyways?`)) {
+        return;
+    }
     setParam(queryParams, paramTypes.string, 'eq', 'equation');
     setParam(queryParams, paramTypes.num, 'it', 'iterations');
     setParam(queryParams, paramTypes.num, 'bk', 'breakout');
@@ -147,6 +155,7 @@ function setup(manual: boolean) {
     togglesUniform = gl.getUniformLocation(program, "u_toggles")! as number;
     aspectUniform = gl.getUniformLocation(program, "u_aspect")! as number;
     colorUniform = gl.getUniformLocation(program, "u_color")! as number;
+    angleUniform = gl.getUniformLocation(program, "u_angle")! as number;
     let posAttrib = gl.getAttribLocation(program, "a_position");
 
     gl.useProgram(program);
@@ -176,6 +185,7 @@ function draw() {
     gl.uniform1f(biasUniform, viewport.settings.bias);
     gl.uniform1f(hueShiftUniform, viewport.settings.hueShift);
     gl.uniform1f(aspectUniform, viewport.aspectRatio);
+    gl.uniform1f(angleUniform, viewport.offset.angle);
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
     coordDisplay.innerHTML = `Coords: ${viewport.offset.pos.x} + ${viewport.offset.pos.y}i\nZoom: ${viewport.zoom.level}`;
@@ -291,6 +301,7 @@ document.addEventListener("mousemove", e => {
         let touchOffset = new Point(clickPos.x - viewport.pointer.lastPos.x, clickPos.y - viewport.pointer.lastPos.y);
         moveDrag(touchOffset);
         viewport.pointer.lastPos = clickPos;
+        requestAnimationFrame(draw);
     }
 });
 canvas.addEventListener("mousedown", e => {
@@ -306,13 +317,18 @@ document.addEventListener("mouseup", () => {
 });
 canvas.addEventListener("wheel", e => {
     zoomScreen(new Point(e.offsetX,e.offsetY),-0.5*Math.sign(e.deltaY));
+    requestAnimationFrame(draw);
 });
 
 document.addEventListener("touchmove", e => {
     if (viewport.pointer.dragging) {
         let touches = getTouches(e);
         let touchOffset = new Point(touches.center[0] - viewport.pointer.lastPos.x, touches.center[1] - viewport.pointer.lastPos.y);
-        moveDrag(touchOffset);
+        if (viewport.settings.fad) {
+            moveDrag(touchOffset, viewport.offset.angle);
+        } else {
+            moveDrag(touchOffset);
+        }
         let zoomFactor;
         if (viewport.pointer.dist > 0) {
             zoomFactor = touches.dist / viewport.pointer.dist;
@@ -321,8 +337,15 @@ document.addEventListener("touchmove", e => {
         }
         let centerPoint = Point.fromArray(touches.center);
         scaleScreen(centerPoint, zoomFactor);
+
+        let angleDif = touches.angle - viewport.pointer.lastAngle;
+        if (viewport.settings.fad) {
+            viewport.offset.angle += Math.atan2(Math.sin(angleDif),Math.cos(angleDif));
+        }
         viewport.pointer.lastPos = centerPoint;
+        viewport.pointer.lastAngle = touches.angle;
         viewport.pointer.dist = touches.dist;
+        requestAnimationFrame(draw);
     }
 });
 
@@ -330,6 +353,7 @@ canvas.addEventListener("touchstart", e => {
     document.body.style.userSelect = "none";
     let touches = getTouches(e);
     viewport.pointer.lastPos = Point.fromArray(touches.center);
+    viewport.pointer.lastAngle = touches.angle;
     viewport.pointer.dist = touches.dist;
     viewport.pointer.dragging = true;
 });
@@ -339,11 +363,13 @@ document.addEventListener("touchend", e => {
 });
 
 
-function moveDrag(coords: Point) {
+function moveDrag(coords: Point, angle?: number) {
     let movePos = pxToMath(coords);
+    if (angle !== undefined) {
+        movePos = new Point(movePos.x * Math.cos(-angle) - movePos.y * Math.sin(-angle), movePos.x * Math.sin(-angle) + movePos.y * Math.cos(-angle));
+    }
     viewport.offset.pos.x = viewport.offset.pos.x - movePos.x/viewport.zoom.log;
     viewport.offset.pos.y = viewport.offset.pos.y + movePos.y/viewport.zoom.log;
-    requestAnimationFrame(draw);
 }
 
 function zoomScreen(coords: Point, zoomAmt: number) {
@@ -354,7 +380,6 @@ function zoomScreen(coords: Point, zoomAmt: number) {
     viewport.zoom.log = Math.pow(2,viewport.zoom.level);
     viewport.offset.pos.x = viewport.offset.pos.x - zoomPoint.x/viewport.zoom.log;
     viewport.offset.pos.y = viewport.offset.pos.y + zoomPoint.y/viewport.zoom.log;
-    requestAnimationFrame(draw);
 }
 
 function scaleScreen(coords: Point, zoomAmt: number) {
@@ -365,13 +390,12 @@ function scaleScreen(coords: Point, zoomAmt: number) {
     viewport.zoom.level = Math.log2(viewport.zoom.log);
     viewport.offset.pos.x = viewport.offset.pos.x - zoomPoint.x/viewport.zoom.log;
     viewport.offset.pos.y = viewport.offset.pos.y + zoomPoint.y/viewport.zoom.log;
-    requestAnimationFrame(draw);
 }
 
 function getTouches(e: TouchEvent) {
     let canvasCoords = canvas.getBoundingClientRect();
     if (e.touches.length === 1) {
-        return {center: [(e.targetTouches[0].pageX - canvasCoords.left), (e.targetTouches[0].pageY - canvasCoords.top)], dist: 0};
+        return {center: [(e.targetTouches[0].pageX - canvasCoords.left), (e.targetTouches[0].pageY - canvasCoords.top)], dist: 0, angle: viewport.pointer.lastAngle};
     } else {
         let total = [0, 0];
         for (let i = 0; i < e.touches.length; i++) {
@@ -379,6 +403,12 @@ function getTouches(e: TouchEvent) {
         }
         let centerPoint = [total[0]/e.touches.length,total[1]/e.touches.length];
         let centerDistance = Math.sqrt(Math.pow(centerPoint[0] - (e.targetTouches[0].pageX - canvasCoords.left), 2) + Math.pow(centerPoint[1] - (e.targetTouches[0].pageY - canvasCoords.top), 2));
-        return {center: centerPoint, dist: centerDistance};
+        let angle;
+        if (viewport.settings.fad) {
+            angle = Math.atan2((e.targetTouches[1].pageY - canvasCoords.top)-(e.targetTouches[0].pageY - canvasCoords.top), (e.targetTouches[1].pageX - canvasCoords.top)-(e.targetTouches[0].pageX - canvasCoords.left))%(2*Math.PI);
+        } else {
+            angle = viewport.offset.angle;
+        }
+        return {center: centerPoint, dist: centerDistance, angle: angle};
     }
 }

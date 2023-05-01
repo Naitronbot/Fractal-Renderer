@@ -44,7 +44,6 @@ function getFragment(ast: ParseNode, settings: any): string {
     let functionString = recursiveDecompose(ast);
     return `#version 300 es
     precision highp float;
-    uniform vec3 u_transform;
     uniform int u_iterations;
     uniform int u_toggles;
     uniform int u_color;
@@ -52,7 +51,7 @@ function getFragment(ast: ParseNode, settings: any): string {
     uniform float u_bias;
     uniform float u_hueShift;
 
-    in vec2 uv;
+    in vec2 c;
     
     out vec4 fragColor;
 
@@ -78,7 +77,7 @@ function getFragment(ast: ParseNode, settings: any): string {
             col = vec3(0.0,x,chroma);
         } else if (h1 < 5.0) {
             col = vec3(x,0.0,chroma);
-        } else if (h1 < 6.0) {
+        } else if (h1 <= 7.0) {
             col = vec3(chroma,0.0,x);
         }
         
@@ -136,8 +135,7 @@ function getFragment(ast: ParseNode, settings: any): string {
     vec2 cpow(vec2 z1, vec2 z2) {
         if (z1 == vec2(0.0,0.0)) {
             if (z2.x == 0.0) {
-                float nan = 0.0/0.0;
-                return vec2(nan, nan);
+                return vec2(1.0,0.0);
             }
             if (z2.x < 0.0) {
                 float infinity = 1.0/0.0;
@@ -333,15 +331,8 @@ function getFragment(ast: ParseNode, settings: any): string {
     vec3 domain(vec2 z) {
         float shift = u_hueShift;
         float angle;
-        if (z == vec2(0.0)) {
-            angle = shift;
-        } else {
-            angle = 180.0/pi * atan(z.y,z.x) + shift;
-        }
+        angle = 180.0/pi * atan(z.y,z.x) + shift;
         angle = mod(angle,360.0);
-        if (angle >= 360.0 || angle <= 0.0) {
-            angle = shift;
-        }
         vec3 hsl = vec3(angle, 1.0, 0.5);
         return hsltorgb(hsl);
     }
@@ -359,8 +350,8 @@ function getFragment(ast: ParseNode, settings: any): string {
         p[8] = 1.5056327351493116e-7;
 
         // Main fractal loop
-        vec2 c = uv/u_transform.z + u_transform.xy;
         vec2 z;
+
         if ((u_toggles&1) == 1) {
             z = c;
         } else {
@@ -402,11 +393,19 @@ function getVertex(): string {
     return `#version 300 es
     in vec4 a_position;
     uniform float u_aspect;
+    uniform float u_angle;
+    uniform vec3 u_transform;
     
-    out vec2 uv;
+    out vec2 c;
     
     void main() {
         gl_Position = a_position;
-        uv = vec2(gl_Position.x * u_aspect,gl_Position.y);
+        c = vec2(gl_Position.x * u_aspect,gl_Position.y);
+        // Fad mode
+        if (abs(u_angle) > 0.0) {
+            c = vec2(c.x*cos(u_angle) - c.y*sin(u_angle),c.x*sin(u_angle) + c.y*cos(u_angle));
+        }
+
+        c = c/u_transform.z + u_transform.xy;
     }`;
 }
