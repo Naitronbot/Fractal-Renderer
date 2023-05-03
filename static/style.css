@@ -14,7 +14,7 @@ body {
 #webGLCanvas {
     margin: 0;
     width: 100%;
-    height: calc(90vh - 220px);
+    height: calc(100vh - 300px);
 }
 
 .input-correction #webGLCanvas {
@@ -55,6 +55,10 @@ button {
     padding: 0 10px 0 10px;
 }
 
+#mqInput {
+    max-width: 80vw;
+}
+
 .mq-inner button {
     height: 100%;
 }
@@ -72,7 +76,7 @@ button {
 
 .input-wrapper {
     width: 80vw;
-    height: calc(30vh - 80px);
+    height: 200px;
     margin: 10px;
     margin-left: 10%;
     display: grid;
@@ -240,9 +244,5 @@ input[disabled] {
 
     button {
         height: 50%;
-    }
-    
-    #webGLCanvas {
-        height: calc(90vh - 220px) !important;
     }
 }
