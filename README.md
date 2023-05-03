@@ -7,7 +7,7 @@ A WebGL application for rendering a fractal based on an inputted equation. Has m
 See live demo at [naitronbomb.com](https://www.naitronbomb.com/fractal/)
 
 ## Compiling
-Install [typescript](https://www.typescriptlang.org/download), and run
+Install [typescript](https://www.typescriptlang.org/download), navigate to the project root directory, and run:
 ```
-tsc build
+tsc
 ```
