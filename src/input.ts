@@ -8,7 +8,7 @@ const MQ_FIELD = MQ.MathField(MQ_CONTAINER, {
     restrictMismatchedBrackets: true,
     autoCommands: 'pi sqrt Gamma',
     // TODO IMPLIMENT LOG
-    autoOperatorNames: 'sin cos tan csc sec cot sinh cosh tanh csch sech coth arg arcsin arccos arctan arccsc arcsec arccot ln log exp cis floor round ceil conj Re Im',
+    autoOperatorNames: 'sin cos tan csc sec cot sinh cosh tanh csch sech coth arg arcsin arccos arctan arccsc arcsec arccot arcsinh arccosh arctanh arccsch arcsech arccoth ln log exp cis floor round ceil conj Re Im',
     supSubsRequireOperand: true,
     handlers: {
         edit: fieldEdit
@@ -66,4 +66,5 @@ function fixGrid() {
         INPUT_GRID?.classList.remove("input-correction");
         CANVAS_WRAPPER?.classList.remove("input-correction");
     }
+    requestAnimationFrame(draw);
 }

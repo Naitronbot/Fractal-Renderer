@@ -255,6 +255,34 @@ function getFragment(ast: ParseNode, settings: any): string {
         return carcsin(cd(vec2(1.0,0.0),z));
     }
 
+    // Inverse Hyperbolic Trig
+
+    vec2 carcsinh(vec2 z) {
+        vec2 zSquared = cpow2(z,2.0);
+        return cln(z+cm(csqrt(cabs(vec2(1.0,0.0) + zSquared)),cexp(vec2(0.0,0.5*carg(vec2(1.0,0.0) + zSquared)))));
+    }
+
+    vec2 carccosh(vec2 z) {
+        vec2 zSquared = cpow2(z,2.0);
+        return cln(z+cm(csqrt(cabs(zSquared - vec2(1.0,0.0))),cexp(vec2(0.0,0.5*carg(zSquared - vec2(1.0,0.0))))));
+    }
+
+    vec2 carctanh(vec2 z) {
+        return 0.5*cln(cd(vec2(1.0,0.0) + z,vec2(1.0,0.0) - z));
+    }
+
+    vec2 carccoth(vec2 z) {
+        return 0.5*cln(cd(z + vec2(1.0,0.0),z - vec2(1.0,0.0)));
+    }
+
+    vec2 carcsech(vec2 z) {
+        return carccosh(cd(vec2(1.0,0.0),z));
+    }
+
+    vec2 carccsch(vec2 z) {
+        return carcsinh(cd(vec2(1.0,0.0),z));
+    }
+
     float p[9];
     const float epsilon = 1e-07;
     vec2 cGamma2(vec2 z) {
