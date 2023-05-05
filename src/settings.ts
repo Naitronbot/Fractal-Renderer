@@ -15,6 +15,8 @@ const SMOOTH_TOGGLE = document.getElementById("smoothToggle") as HTMLInputElemen
 const RECOMP_TOGGLE = document.getElementById("recompToggle") as HTMLInputElement;
 const FAD_TOGGLE = document.getElementById("fadToggle") as HTMLInputElement;
 const RECOMP_BUTTON = document.getElementById("recompButton") as HTMLElement;
+const AA_SLIDER = document.getElementById("aaSlider") as HTMLInputElement;
+const AA_BOX = document.getElementById("aaBox") as HTMLInputElement;
 
 function settingSetup(slider: HTMLInputElement, box: HTMLInputElement, setting: string, float: boolean) {
     slider.addEventListener("input", () => {
@@ -39,6 +41,30 @@ settingSetup(ITERATIONS_SLIDER, ITERATIONS_BOX, "iterations", false);
 settingSetup(BREAKOUT_SLIDER, BREAKOUT_BOX, "breakout", true);
 settingSetup(BIAS_SLIDER, BIAS_BOX, "bias", true);
 settingSetup(HUESHIFT_SLIDER, HUESHIFT_BOX, "hueShift", true);
+
+AA_SLIDER.addEventListener("input", () => {
+    let num = parseInt(AA_SLIDER.value);
+    if (!isNaN(num)) {
+        viewport.settings.samples = num;
+    }
+    AA_BOX.value = num**2 + "";
+    requestAnimationFrame(draw);
+});
+AA_BOX.addEventListener("change", () => {
+    let num = parseInt(AA_BOX.value);
+    if (!isNaN(num)) {
+        let sqrt = Math.sqrt(num);
+        let rounded = Math.round(sqrt)**2;
+        if (num > 16 && !confirm(`You've entered a very large amount of samples per pixel (${rounded}), this may crash WebGL, are you sure you want to continue.`)) {
+            AA_BOX.value = parseInt(AA_SLIDER.value)**2 + "";
+            return;
+        }
+        AA_SLIDER.value = sqrt + "";
+        AA_BOX.value = rounded + "";
+        viewport.settings.samples = sqrt;
+    }
+    requestAnimationFrame(draw);
+});
 
 COLORING_MODE.addEventListener("change", () => {
     viewport.settings.coloring = parseInt(COLORING_MODE.value);

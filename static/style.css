@@ -56,6 +56,7 @@ button {
 .mq-inner {
     height: fit-content;
     width: 100%;
+    max-width: 75vw;
     display: flex;
     gap: 2.5px;
     justify-content: center;
@@ -63,7 +64,7 @@ button {
 }
 
 #mqInput {
-    max-width: 80vw;
+    max-width: 100%;
 }
 
 .mq-inner button {
@@ -84,7 +85,6 @@ button {
 .input-wrapper {
     width: 100%;
     height: fit-content;
-    max-height: 250px;
     margin: 10px 0 30px 0;
     display: grid;
     grid-template-columns: 320px 1fr 320px;
@@ -230,6 +230,7 @@ input[disabled] {
         grid-template-columns: 100%;
         grid-template-rows: 1fr 1fr 1fr;
         overflow-y: scroll;
+        max-height: 200px;
     } 
 
     .mq-wrapper {
