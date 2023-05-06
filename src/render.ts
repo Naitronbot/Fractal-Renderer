@@ -336,7 +336,7 @@ function getURL() {
     return base;
 }
 
-function fullScreen() {
+function fullscreen() {
     if (canvas.requestFullscreen) {
         canvas.requestFullscreen();
     }
