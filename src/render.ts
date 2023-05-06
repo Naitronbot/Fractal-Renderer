@@ -244,12 +244,11 @@ function draw() {
 }
 
 function resize() {
-    if (canvas.clientHeight !== canvas.height || canvas.clientWidth != canvas.width) {
-        canvas.height = 0;
-        canvas.height = canvas.clientHeight;
-        canvas.width = canvas.clientWidth;
-        viewport.width = canvas.clientWidth
-        viewport.height = canvas.clientHeight;
+    if (CANVAS_WRAPPER.clientHeight !== canvas.height || CANVAS_WRAPPER.clientWidth != canvas.width) {
+        canvas.height = CANVAS_WRAPPER.clientHeight;
+        canvas.width = CANVAS_WRAPPER.clientWidth;
+        viewport.width = CANVAS_WRAPPER.clientWidth;
+        viewport.height = CANVAS_WRAPPER.clientHeight;
     }
 }
 
