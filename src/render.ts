@@ -244,16 +244,17 @@ function draw() {
 }
 
 function resize() {
+    let devicePixelRatio = window.devicePixelRatio || 1;
     if (document.fullscreenElement || (document as any).mozFullScreenElement || (document as any).webkitFullscreenElement) {
-        canvas.width = screen.width;
-        canvas.height = screen.height;
-        viewport.width = screen.width;
-        viewport.height = screen.height;
+        canvas.width = screen.width * devicePixelRatio;
+        canvas.height = screen.height * devicePixelRatio;
+        viewport.width = screen.width * devicePixelRatio;
+        viewport.height = screen.height * devicePixelRatio;
     } else if (CANVAS_WRAPPER.clientHeight !== canvas.height || CANVAS_WRAPPER.clientWidth != canvas.width) {
-        canvas.height = CANVAS_WRAPPER.clientHeight;
-        canvas.width = CANVAS_WRAPPER.clientWidth;
-        viewport.width = CANVAS_WRAPPER.clientWidth;
-        viewport.height = CANVAS_WRAPPER.clientHeight;
+        canvas.height = CANVAS_WRAPPER.clientHeight * devicePixelRatio;
+        canvas.width = CANVAS_WRAPPER.clientWidth * devicePixelRatio;
+        viewport.width = CANVAS_WRAPPER.clientWidth * devicePixelRatio;
+        viewport.height = CANVAS_WRAPPER.clientHeight * devicePixelRatio;
     }
 }
 
