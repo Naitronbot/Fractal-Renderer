@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale = 1.0, user-scalable=no">
-    <meta property="og:title" content="Fractal Renderer"/>
-    <meta property="og:description" 
-      content="Generate realtime fractals in the browser." />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale = 1.0, user-scalable=no">
+    <meta property="og:title" content="Fractal Renderer" />
+    <meta property="og:description" content="Generate realtime fractals in the browser." />
     <title>Fractal Renderer</title>
     <link rel="stylesheet" href="./style.css">
-    <link rel="stylesheet" href="mathquill-0.10.1/mathquill.css"/>
+    <link rel="stylesheet" href="mathquill-0.10.1/mathquill.css" />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
     <script src="mathquill-0.10.1/mathquill.js"></script>
     <script src="shaders.js" defer></script>
@@ -18,6 +19,7 @@
     <script src="parser.js" defer></script>
     <script src="input.js" defer></script>
 </head>
+
 <body>
     <div class="main">
         <div id="canvasWrapper" class="canvas-wrapper">
@@ -26,25 +28,36 @@
         <div class="button-wrapper">
             <p id="coordDisplay"></p>
             <div class="button-wrapper">
-                <button title="Reset Offset/Zoom" id="resetButton" onclick="resetView()"><img src="refresh.svg"></button>
-                <button title="Download Screenshot" id="downloadButton" onclick="downloadCanvas()"><img src="download.svg"></button>
+                <button title="Reset Offset/Zoom" id="resetButton" onclick="resetView()"><img
+                        src="refresh.svg"></button>
+                <button title="Download Screenshot" id="downloadButton" onclick="downloadCanvas()"><img
+                        src="download.svg"></button>
                 <div class="share-wrapper button-wrapper">
-                    <div id="sharePopup" style="display: none;"><input id="shareInput" readonly="readonly"><button onclick="SHARE_POPUP.style.display = 'none'"><img src="close.svg"></button></div>
+                    <div id="sharePopup" style="display: none;"><input id="shareInput" readonly="readonly"><button
+                            onclick="SHARE_POPUP.style.display = 'none'"><img src="close.svg"></button></div>
                     <button title="Get Fractal URL" id="urlButton" onclick="shareURL()"><img src="share.svg"></button>
                 </div>
-                <button title="Fullscreen" id="fullscreenButton" onclick="canvas.requestFullscreen()"><img src="fullscreen.svg"></button>
+                <button title="Fullscreen" id="fullscreenButton" onclick="fullScreen()"><img
+                        src="fullscreen.svg"></button>
             </div>
         </div>
         <div id="inputGrid" class="input-wrapper">
             <div class="settings-wrapper">
                 <label title="How many iterations of the function will be run" for="iterationsSlider">Iterations</label>
-                <input title="How many iterations of the function will be run" id="iterationsSlider" type="range" min="0" max="1000">
-                <input title="How many iterations of the function will be run" id="iterationsBox" class="input-box" type="number" value="500">
-                <label title="The magnitude in which a point will be considered outside the fractal" id="breakoutLabel" for="breakoutSlider">Breakout</label>
-                <input title="The magnitude in which a point will be considered outside the fractal" id="breakoutSlider" type="range" min="0.00" step="0.01" max="20000.00" value="10000.00">
-                <input title="The magnitude in which a point will be considered outside the fractal" id="breakoutBox" class="input-box" type="number" value="10000">
-                <label title="Makes z start as the position of the current pixel instead of zero" id="juliaLabel" for="juliaToggle">Julia Mode</label>
-                <input title="Makes z start as the position of the current pixel instead of zero" id="juliaToggle" type="checkbox">
+                <input title="How many iterations of the function will be run" id="iterationsSlider" type="range"
+                    min="0" max="1000">
+                <input title="How many iterations of the function will be run" id="iterationsBox" class="input-box"
+                    type="number" value="500">
+                <label title="The magnitude in which a point will be considered outside the fractal" id="breakoutLabel"
+                    for="breakoutSlider">Breakout</label>
+                <input title="The magnitude in which a point will be considered outside the fractal" id="breakoutSlider"
+                    type="range" min="0.00" step="0.01" max="20000.00" value="10000.00">
+                <input title="The magnitude in which a point will be considered outside the fractal" id="breakoutBox"
+                    class="input-box" type="number" value="10000">
+                <label title="Makes z start as the position of the current pixel instead of zero" id="juliaLabel"
+                    for="juliaToggle">Julia Mode</label>
+                <input title="Makes z start as the position of the current pixel instead of zero" id="juliaToggle"
+                    type="checkbox">
             </div>
             <div class="mq-wrapper">
                 <div class="mq-inner">
@@ -52,12 +65,18 @@
                     <button id="recompButton" onclick="setup(true)" style="display: none;"><img src="done.svg"></button>
                 </div>
                 <div>
-                    <label title="Make rendering the fractal happen on button press, instead of whenever the equation is edited" id="recompLabel" for="recompToggle">Manual Recompile</label>
-                    <input title="Make rendering the fractal happen on button press, instead of whenever the equation is edited" id="recompToggle" type="checkbox">
+                    <label
+                        title="Make rendering the fractal happen on button press, instead of whenever the equation is edited"
+                        id="recompLabel" for="recompToggle">Manual Recompile</label>
+                    <input
+                        title="Make rendering the fractal happen on button press, instead of whenever the equation is edited"
+                        id="recompToggle" type="checkbox">
                 </div>
                 <div>
-                    <label title="Allow for rotation of the canvas on touchscreen devices (why)" id="fadLabel" for="fadToggle">Fad Mode</label>
-                    <input title="Allow for rotation of the canvas on touchscreen devices (why)" id="fadToggle" type="checkbox">
+                    <label title="Allow for rotation of the canvas on touchscreen devices (why)" id="fadLabel"
+                        for="fadToggle">Fad Mode</label>
+                    <input title="Allow for rotation of the canvas on touchscreen devices (why)" id="fadToggle"
+                        type="checkbox">
                 </div>
                 <div id="errorBox" style="display: none;"></div>
             </div>
@@ -75,18 +94,34 @@
                     <option value="8">Black and White Inverted</option>
                 </select>
                 <label title="Raises final escape time to 1.1^bias" id="biasLabel" for="biasSlider">Color Bias</label>
-                <input title="Raises final escape time to 1.1^bias" id="biasSlider" type="range" min="-10.00" step="0.01" max="10.00" value="0.00">
-                <input title="Raises final escape time to 1.1^bias" id="biasBox" class="input-box" type="number" value="0">
-                <label title="Adjusts the hue by rotating it on the color wheel" id="hueShiftLabel" for="biasSlider">Hue Shift</label>
-                <input title="Adjusts the hue by rotating it on the color wheel" id="hueShiftSlider" type="range" min="0" step="0.01" max="360.00" value="0.00">
-                <input title="Adjusts the hue by rotating it on the color wheel" id="hueShiftBox" class="input-box" type="number" min="0.00" max="360.00" value="0">
-                <label title="Set the amount of samples to take per pixel, anti-aliases the image (can be quite low for large values)" id="aaLabel" for="aaSlider">Samples Per Pixel</label>
-                <input title="Set the amount of samples to take per pixel, anti-aliases the image (can be quite low for large values)" id="aaSlider" type="range" min="1" step="1" max="4" value="1">
-                <input title="Set the amount of samples to take per pixel, anti-aliases the image (can be quite low for large values)" id="aaBox" class="input-box" type="number" min="1" value="1">
-                <label title="Ajust iteration count to make transition between iterations smoother (might break on non-mandelbrot fractals)" id="smoothLabel" for="smoothToggle">Smooth Coloring</label>
-                <input title="Ajust iteration count to make transition between iterations smoother (might break on non-mandelbrot fractals)" id="smoothToggle" type="checkbox">
+                <input title="Raises final escape time to 1.1^bias" id="biasSlider" type="range" min="-10.00"
+                    step="0.01" max="10.00" value="0.00">
+                <input title="Raises final escape time to 1.1^bias" id="biasBox" class="input-box" type="number"
+                    value="0">
+                <label title="Adjusts the hue by rotating it on the color wheel" id="hueShiftLabel" for="biasSlider">Hue
+                    Shift</label>
+                <input title="Adjusts the hue by rotating it on the color wheel" id="hueShiftSlider" type="range"
+                    min="0" step="0.01" max="360.00" value="0.00">
+                <input title="Adjusts the hue by rotating it on the color wheel" id="hueShiftBox" class="input-box"
+                    type="number" min="0.00" max="360.00" value="0">
+                <label
+                    title="Set the amount of samples to take per pixel, anti-aliases the image (can be quite low for large values)"
+                    id="aaLabel" for="aaSlider">Samples Per Pixel</label>
+                <input
+                    title="Set the amount of samples to take per pixel, anti-aliases the image (can be quite low for large values)"
+                    id="aaSlider" type="range" min="1" step="1" max="4" value="1">
+                <input
+                    title="Set the amount of samples to take per pixel, anti-aliases the image (can be quite low for large values)"
+                    id="aaBox" class="input-box" type="number" min="1" value="1">
+                <label
+                    title="Ajust iteration count to make transition between iterations smoother (might break on non-mandelbrot fractals)"
+                    id="smoothLabel" for="smoothToggle">Smooth Coloring</label>
+                <input
+                    title="Ajust iteration count to make transition between iterations smoother (might break on non-mandelbrot fractals)"
+                    id="smoothToggle" type="checkbox">
             </div>
         </div>
     </div>
 </body>
+
 </html>
