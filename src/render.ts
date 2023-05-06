@@ -245,6 +245,7 @@ function draw() {
 
 function resize() {
     if (canvas.clientHeight !== canvas.height || canvas.clientWidth != canvas.width) {
+        canvas.height = 0;
         canvas.height = canvas.clientHeight;
         canvas.width = canvas.clientWidth;
         viewport.width = canvas.clientWidth
