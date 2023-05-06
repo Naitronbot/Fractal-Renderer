@@ -244,7 +244,10 @@ function draw() {
 }
 
 function resize() {
-    if (CANVAS_WRAPPER.clientHeight !== canvas.height || CANVAS_WRAPPER.clientWidth != canvas.width) {
+    if (document.fullscreenElement || (document as any).mozFullScreenElement || (document as any).webkitFullscreenElement) {
+        canvas.width = screen.width;
+        canvas.height = screen.height;
+    } else if (CANVAS_WRAPPER.clientHeight !== canvas.height || CANVAS_WRAPPER.clientWidth != canvas.width) {
         canvas.height = CANVAS_WRAPPER.clientHeight;
         canvas.width = CANVAS_WRAPPER.clientWidth;
         viewport.width = CANVAS_WRAPPER.clientWidth;

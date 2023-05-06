@@ -91,7 +91,7 @@ button {
     justify-items: center;
     flex-grow: 0;
     flex-shrink: 0;
-} 
+}
 
 .input-correction {
     grid-template-rows: 1fr 1fr;
@@ -158,7 +158,8 @@ input[disabled] {
     padding: 10px;
 }
 
-.render-wrapper,.settings-wrapper {
+.render-wrapper,
+.settings-wrapper {
     height: 100%;
     gap: 5px;
     display: grid;
@@ -175,7 +176,8 @@ input[disabled] {
     grid-template-columns: 120px 1fr 1fr;
 }
 
-.render-wrapper input, .settings-wrapper input {
+.render-wrapper input,
+.settings-wrapper input {
     width: 100%;
 }
 
@@ -214,7 +216,8 @@ input[disabled] {
     margin-left: 5px
 }
 
-#smoothToggle, #juliaToggle {
+#smoothToggle,
+#juliaToggle {
     justify-self: start;
     width: auto;
 }
@@ -230,7 +233,7 @@ input[disabled] {
         grid-template-rows: 1fr 1fr 1fr;
         overflow-y: scroll;
         max-height: 200px;
-    } 
+    }
 
     .mq-wrapper {
         grid-column: 1 !important;
