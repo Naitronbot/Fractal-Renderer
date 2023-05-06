@@ -2,7 +2,7 @@ declare const MathQuill: any;
 const MQ = MathQuill.getInterface(2);
 const MQ_CONTAINER = document.getElementById("mqInput");
 const INPUT_GRID = document.getElementById("inputGrid");
-const CANVAS_WRAPPER = document.getElementById("canvasWrapper");
+const CANVAS_WRAPPER = document.getElementById("canvasWrapper")!;
 const INPUT_ELEMENTS = INPUT_GRID?.children as HTMLCollection;
 const MQ_FIELD = MQ.MathField(MQ_CONTAINER, {
     restrictMismatchedBrackets: true,
