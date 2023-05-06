@@ -247,6 +247,8 @@ function resize() {
     if (document.fullscreenElement || (document as any).mozFullScreenElement || (document as any).webkitFullscreenElement) {
         canvas.width = screen.width;
         canvas.height = screen.height;
+        viewport.width = screen.width;
+        viewport.height = screen.height;
     } else if (CANVAS_WRAPPER.clientHeight !== canvas.height || CANVAS_WRAPPER.clientWidth != canvas.width) {
         canvas.height = CANVAS_WRAPPER.clientHeight;
         canvas.width = CANVAS_WRAPPER.clientWidth;
@@ -339,9 +341,10 @@ function getURL() {
 function fullscreen() {
     if (canvas.requestFullscreen) {
         canvas.requestFullscreen();
-    }
-    if ((canvas as any).webkitRequestFullscreen) {
+    } else if ((canvas as any).webkitRequestFullscreen) {
         (canvas as any).webkitRequestFullscreen();
+    } else {
+        throw new Error("Error fullscreening the canvas");
     }
 }
 
