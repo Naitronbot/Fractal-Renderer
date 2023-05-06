@@ -3,6 +3,7 @@ body {
     padding: 0;
     width: 100vw;
     height: 100vh;
+    height: -webkit-fill-available;
     overflow: hidden;
     background-color: #242424;
 }
@@ -11,23 +12,29 @@ body {
     box-sizing: border-box;
 }
 
+.main {
+    height: 100%;
+    height: -webkit-fill-available;
+    width: 80%;
+    display: flex;
+    flex-direction: column;
+    margin-left: 10%;
+}
+
 #webGLCanvas {
     margin: 0;
     width: 100%;
-    height: calc(90vh - 220px);
-}
-
-.input-correction #webGLCanvas {
-    height: calc(90vh - 300px);
+    height: 100%;
 }
 
 .canvas-wrapper {
-    width: fit-content;
-    margin-left: 10%;
-    width: 80vw;
+    width: 100%;
+    flex-basis: 0;
+    flex-grow: 1;
+    flex-shrink: 1;
 }
 
-.canvas-wrapper div {
+.button-wrapper {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -49,17 +56,22 @@ button {
 .mq-inner {
     height: fit-content;
     width: 100%;
+    max-width: 75vw;
     display: flex;
     gap: 2.5px;
     justify-content: center;
     padding: 0 10px 0 10px;
 }
 
+#mqInput {
+    max-width: 100%;
+}
+
 .mq-inner button {
     height: 100%;
 }
 
-.canvas-wrapper img {
+.button-wrapper img {
     width: 100%;
     height: 100%;
 }
@@ -71,14 +83,15 @@ button {
 }
 
 .input-wrapper {
-    width: 80vw;
-    height: calc(30vh - 80px);
-    margin: 10px;
-    margin-left: 10%;
+    width: 100%;
+    height: fit-content;
+    margin: 10px 0 30px 0;
     display: grid;
     grid-template-columns: 320px 1fr 320px;
     grid-template-rows: 1fr;
     justify-items: center;
+    flex-grow: 0;
+    flex-shrink: 0;
 } 
 
 .input-correction {
@@ -217,6 +230,7 @@ input[disabled] {
         grid-template-columns: 100%;
         grid-template-rows: 1fr 1fr 1fr;
         overflow-y: scroll;
+        max-height: 200px;
     } 
 
     .mq-wrapper {
@@ -240,9 +254,5 @@ input[disabled] {
 
     button {
         height: 50%;
-    }
-    
-    #webGLCanvas {
-        height: calc(90vh - 220px) !important;
     }
 }
