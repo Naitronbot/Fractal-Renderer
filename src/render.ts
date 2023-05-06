@@ -16,19 +16,19 @@ class Point {
     }
 
     toArray() {
-        return [this.x, this.y];
+        return [this.x,this.y];
     }
 
     static fromArray(array: number[]) {
         return new Point(array[0], array[1]);
     }
-
+    
     static duplicate(p: Point): Point {
         return new Point(p.x, p.y);
     }
 }
 
-const enum UniformTypes { FLOAT, INT };
+const enum UniformTypes {FLOAT, INT};
 class ShaderUniformContainer {
     private uniformLocations: WebGLUniformLocation[];
     private uniformValues: Function[];
@@ -86,7 +86,7 @@ class ShaderUniformContainer {
     }
 }
 
-const viewport: { [key: string]: any } = {
+const viewport: {[key: string]: any} = {
     width: 0,
     height: 0,
     zoom: {
@@ -94,11 +94,11 @@ const viewport: { [key: string]: any } = {
         log: 1
     },
     offset: {
-        pos: new Point(0, 0),
+        pos: new Point(0,0),
         angle: 0
     },
     pointer: {
-        lastPos: new Point(0, 0),
+        lastPos: new Point(0,0),
         lastDist: 0,
         dist: 0,
         lastAngle: 0,
@@ -123,7 +123,7 @@ let shaderUniforms: ShaderUniformContainer;
 
 loadQueryParams();
 
-const enum paramTypes { string, bool, num, offset, zoom }
+const enum paramTypes {string, bool, num, offset, zoom}
 function loadQueryParams() {
     const queryParams = new URLSearchParams(window.location.search);
     let iter = queryParams.get('it');
@@ -160,7 +160,7 @@ function setParam(params: URLSearchParams, type: paramTypes, param: string, sett
     } else if (type === paramTypes.zoom) {
         const zoom = parseFloat(currentParam)
         viewport.zoom.level = zoom;
-        viewport.zoom.log = Math.pow(2, viewport.zoom.level);
+        viewport.zoom.log = Math.pow(2,viewport.zoom.level);
     }
 }
 
@@ -177,7 +177,7 @@ function setDefaults() {
     BIAS_BOX.value = viewport.settings.bias;
     COLORING_MODE.value = viewport.settings.coloring;
     AA_SLIDER.value = viewport.settings.samples;
-    AA_BOX.value = viewport.settings.samples ** 2 + "";
+    AA_BOX.value = viewport.settings.samples**2 + "";
     toggleColoringActive();
 }
 
@@ -202,16 +202,16 @@ function setup(manual: boolean) {
         return;
     }
     shaderUniforms = new ShaderUniformContainer(program);
-    shaderUniforms.add("u_transform", () => [viewport.offset.pos.x, viewport.offset.pos.y, viewport.zoom.log], UniformTypes.FLOAT);
-    shaderUniforms.add("u_iterations", () => [viewport.settings.iterations], UniformTypes.INT);
-    shaderUniforms.add("u_breakout", () => [viewport.settings.breakout], UniformTypes.FLOAT);
-    shaderUniforms.add("u_bias", () => [viewport.settings.bias], UniformTypes.FLOAT);
-    shaderUniforms.add("u_hueShift", () => [viewport.settings.hueShift], UniformTypes.FLOAT);
-    shaderUniforms.add("u_toggles", () => [viewport.settings.julia + 2 * viewport.settings.smooth], UniformTypes.INT);
-    shaderUniforms.add("u_resolution", () => [viewport.width, viewport.height], UniformTypes.FLOAT);
-    shaderUniforms.add("u_color", () => [viewport.settings.coloring], UniformTypes.INT);
-    shaderUniforms.add("u_angle", () => [viewport.offset.angle], UniformTypes.FLOAT);
-    shaderUniforms.add("u_samples", () => [viewport.settings.samples], UniformTypes.INT);
+    shaderUniforms.add("u_transform", ()=>[viewport.offset.pos.x, viewport.offset.pos.y, viewport.zoom.log], UniformTypes.FLOAT);
+    shaderUniforms.add("u_iterations", ()=>[viewport.settings.iterations], UniformTypes.INT);
+    shaderUniforms.add("u_breakout", ()=>[viewport.settings.breakout], UniformTypes.FLOAT);
+    shaderUniforms.add("u_bias", ()=>[viewport.settings.bias], UniformTypes.FLOAT);
+    shaderUniforms.add("u_hueShift", ()=>[viewport.settings.hueShift], UniformTypes.FLOAT);
+    shaderUniforms.add("u_toggles", ()=>[viewport.settings.julia + 2*viewport.settings.smooth], UniformTypes.INT);
+    shaderUniforms.add("u_resolution", ()=>[viewport.width, viewport.height], UniformTypes.FLOAT);
+    shaderUniforms.add("u_color", ()=>[viewport.settings.coloring], UniformTypes.INT);
+    shaderUniforms.add("u_angle", ()=>[viewport.offset.angle], UniformTypes.FLOAT);
+    shaderUniforms.add("u_samples", ()=>[viewport.settings.samples], UniformTypes.INT);
 
     gl.bindAttribLocation(program, 0, "zero");
 
@@ -287,11 +287,11 @@ function createFragment() {
 }
 
 function pxToMath(px: Point): Point {
-    return new Point(2.0 * px.x / canvas.clientWidth * (viewport.width / viewport.height), 2.0 * px.y / canvas.clientHeight);
+    return new Point(2.0*px.x/canvas.clientWidth*(viewport.width/viewport.height), 2.0*px.y/canvas.clientHeight);
 }
 
 function pxToCanvas(px: Point): Point {
-    return new Point((2.0 * px.x / canvas.clientWidth - 1) * (viewport.width / viewport.height), 2.0 * px.y / canvas.clientHeight - 1);
+    return new Point((2.0*px.x/canvas.clientWidth - 1)*(viewport.width/viewport.height), 2.0*px.y/canvas.clientHeight - 1);
 }
 
 function resetView() {
@@ -325,16 +325,17 @@ function getURL() {
     base += `?eq=${encodeURIComponent(viewport.settings.equation)}`;
     base += `&it=${viewport.settings.iterations}`;
     base += `&bk=${viewport.settings.breakout}`;
-    base += `&jm=${viewport.settings.julia + 0}`;
+    base += `&jm=${viewport.settings.julia+0}`;
     base += `&cm=${viewport.settings.coloring}`;
     base += `&cb=${viewport.settings.bias}`;
     base += `&hs=${viewport.settings.hueShift}`;
-    base += `&sm=${viewport.settings.smooth + 0}`;
+    base += `&sm=${viewport.settings.smooth+0}`;
     base += `&px=${viewport.offset.pos.x}`;
     base += `&py=${viewport.offset.pos.y}`;
     base += `&zm=${viewport.zoom.level}`;
     return base;
 }
+
 function fullScreen() {
     if (canvas.requestFullscreen) {
         canvas.requestFullscreen();
@@ -380,7 +381,7 @@ document.addEventListener("mouseup", () => {
     viewport.pointer.dragging = false;
 });
 canvas.addEventListener("wheel", e => {
-    zoomScreen(new Point(e.offsetX, e.offsetY), -0.002 * e.deltaY);
+    zoomScreen(new Point(e.offsetX,e.offsetY),-0.002*e.deltaY);
     requestAnimationFrame(draw);
 });
 
@@ -404,7 +405,7 @@ document.addEventListener("touchmove", e => {
 
         let angleDif = touches.angle - viewport.pointer.lastAngle;
         if (viewport.settings.fad) {
-            viewport.offset.angle += Math.atan2(Math.sin(angleDif), Math.cos(angleDif));
+            viewport.offset.angle += Math.atan2(Math.sin(angleDif),Math.cos(angleDif));
         }
         viewport.pointer.lastPos = centerPoint;
         viewport.pointer.lastAngle = touches.angle;
@@ -432,47 +433,47 @@ function moveDrag(coords: Point, angle?: number) {
     if (angle !== undefined) {
         movePos = new Point(movePos.x * Math.cos(-angle) - movePos.y * Math.sin(-angle), movePos.x * Math.sin(-angle) + movePos.y * Math.cos(-angle));
     }
-    viewport.offset.pos.x = viewport.offset.pos.x - movePos.x / viewport.zoom.log;
-    viewport.offset.pos.y = viewport.offset.pos.y + movePos.y / viewport.zoom.log;
+    viewport.offset.pos.x = viewport.offset.pos.x - movePos.x/viewport.zoom.log;
+    viewport.offset.pos.y = viewport.offset.pos.y + movePos.y/viewport.zoom.log;
 }
 
 function zoomScreen(coords: Point, zoomAmt: number) {
     let zoomPoint = pxToCanvas(coords);
-    viewport.offset.pos.x = viewport.offset.pos.x + zoomPoint.x / viewport.zoom.log;
-    viewport.offset.pos.y = viewport.offset.pos.y - zoomPoint.y / viewport.zoom.log;
+    viewport.offset.pos.x = viewport.offset.pos.x + zoomPoint.x/viewport.zoom.log;
+    viewport.offset.pos.y = viewport.offset.pos.y - zoomPoint.y/viewport.zoom.log;
     viewport.zoom.level += zoomAmt;
-    viewport.zoom.log = Math.pow(2, viewport.zoom.level);
-    viewport.offset.pos.x = viewport.offset.pos.x - zoomPoint.x / viewport.zoom.log;
-    viewport.offset.pos.y = viewport.offset.pos.y + zoomPoint.y / viewport.zoom.log;
+    viewport.zoom.log = Math.pow(2,viewport.zoom.level);
+    viewport.offset.pos.x = viewport.offset.pos.x - zoomPoint.x/viewport.zoom.log;
+    viewport.offset.pos.y = viewport.offset.pos.y + zoomPoint.y/viewport.zoom.log;
 }
 
 function scaleScreen(coords: Point, zoomAmt: number) {
     let zoomPoint = pxToCanvas(coords);
-    viewport.offset.pos.x = viewport.offset.pos.x + zoomPoint.x / viewport.zoom.log;
-    viewport.offset.pos.y = viewport.offset.pos.y - zoomPoint.y / viewport.zoom.log;
+    viewport.offset.pos.x = viewport.offset.pos.x + zoomPoint.x/viewport.zoom.log;
+    viewport.offset.pos.y = viewport.offset.pos.y - zoomPoint.y/viewport.zoom.log;
     viewport.zoom.log *= zoomAmt;
     viewport.zoom.level = Math.log2(viewport.zoom.log);
-    viewport.offset.pos.x = viewport.offset.pos.x - zoomPoint.x / viewport.zoom.log;
-    viewport.offset.pos.y = viewport.offset.pos.y + zoomPoint.y / viewport.zoom.log;
+    viewport.offset.pos.x = viewport.offset.pos.x - zoomPoint.x/viewport.zoom.log;
+    viewport.offset.pos.y = viewport.offset.pos.y + zoomPoint.y/viewport.zoom.log;
 }
 
 function getTouches(e: TouchEvent) {
     let canvasCoords = canvas.getBoundingClientRect();
     if (e.touches.length === 1) {
-        return { center: [(e.targetTouches[0].pageX - canvasCoords.left), (e.targetTouches[0].pageY - canvasCoords.top)], dist: 0, angle: viewport.pointer.lastAngle };
+        return {center: [(e.targetTouches[0].pageX - canvasCoords.left), (e.targetTouches[0].pageY - canvasCoords.top)], dist: 0, angle: viewport.pointer.lastAngle};
     } else {
         let total = [0, 0];
         for (let i = 0; i < e.touches.length; i++) {
             total = [total[0] + (e.targetTouches[i].pageX - canvasCoords.left), total[1] + (e.targetTouches[i].pageY - canvasCoords.top)];
         }
-        let centerPoint = [total[0] / e.touches.length, total[1] / e.touches.length];
+        let centerPoint = [total[0]/e.touches.length,total[1]/e.touches.length];
         let centerDistance = Math.sqrt(Math.pow(centerPoint[0] - (e.targetTouches[0].pageX - canvasCoords.left), 2) + Math.pow(centerPoint[1] - (e.targetTouches[0].pageY - canvasCoords.top), 2));
         let angle;
         if (viewport.settings.fad) {
-            angle = Math.atan2((e.targetTouches[1].pageY - canvasCoords.top) - (e.targetTouches[0].pageY - canvasCoords.top), (e.targetTouches[1].pageX - canvasCoords.top) - (e.targetTouches[0].pageX - canvasCoords.left)) % (2 * Math.PI);
+            angle = Math.atan2((e.targetTouches[1].pageY - canvasCoords.top)-(e.targetTouches[0].pageY - canvasCoords.top), (e.targetTouches[1].pageX - canvasCoords.top)-(e.targetTouches[0].pageX - canvasCoords.left))%(2*Math.PI);
         } else {
             angle = viewport.offset.angle;
         }
-        return { center: centerPoint, dist: centerDistance, angle: angle };
+        return {center: centerPoint, dist: centerDistance, angle: angle};
     }
 }
