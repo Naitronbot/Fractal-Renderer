@@ -390,6 +390,7 @@ canvas.addEventListener("wheel", e => {
 
 document.addEventListener("touchmove", e => {
     if (viewport.pointer.dragging) {
+        e.preventDefault();
         let touches = getTouches(e);
         let touchOffset = new Point(touches.center[0] - viewport.pointer.lastPos.x, touches.center[1] - viewport.pointer.lastPos.y);
         if (viewport.settings.fad) {
@@ -418,6 +419,7 @@ document.addEventListener("touchmove", e => {
 });
 
 canvas.addEventListener("touchstart", e => {
+    e.preventDefault();
     document.body.style.userSelect = "none";
     let touches = getTouches(e);
     viewport.pointer.lastPos = Point.fromArray(touches.center);
