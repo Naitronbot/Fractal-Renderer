@@ -185,6 +185,7 @@ let textureProgram: WebGLProgram;
 let canvasProgram: WebGLProgram;
 let samplesLocation: WebGLUniformLocation;
 let offsetLocation: WebGLUniformLocation;
+let frameBuffers: WebGLFramebuffer[] = [];
 function setup(manual: boolean) {
     if (RECOMP_TOGGLE.checked && !manual) {
         return;
@@ -227,6 +228,10 @@ function setup(manual: boolean) {
 
     samplesLocation = gl.getUniformLocation(textureProgram, "u_samples")!;
     offsetLocation = gl.getUniformLocation(textureProgram, "u_offset")!;
+    
+    frameBuffers = [];
+    frameBuffers.push(gl.createFramebuffer()!);
+    frameBuffers.push(gl.createFramebuffer()!);
 
     gl.bindAttribLocation(textureProgram, 0, "zero");
     gl.bindAttribLocation(canvasProgram, 0, "zero");
@@ -245,15 +250,12 @@ function setup(manual: boolean) {
     requestAnimationFrame(draw);
 }
 
-let frameBuffers: WebGLFramebuffer[] = [];
-let textures: WebGLTexture[] = [];
 let bufferIndex = 0;
+let textures: WebGLTexture[] = [];
 function draw() {
     // Ensure canvas is sized properly 
     resize();
 
-    // Clear textures and buffers
-    frameBuffers = [];
     textures = [];
 
     // Create main texture
@@ -266,7 +268,6 @@ function draw() {
     gl.bindTexture(gl.TEXTURE_2D, null);
 
     // Setup framebuffer to render to texture
-    frameBuffers.push(gl.createFramebuffer()!);
     gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffers[0]);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, textures[0], 0);
 
@@ -275,28 +276,7 @@ function draw() {
 
     // Asign all uniforms
     shaderUniforms.assignAll();
-    viewport.settings.samples = 1;
-    gl.uniform1i(samplesLocation, 1);
-    gl.uniform2f(offsetLocation, 0, 0);
-
-    // Render to texture
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-    // Unbind framebuffer to render to canvas
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-    // Switch to canvas program
-    gl.useProgram(canvasProgram);
-
-    // Render to canvas
-    gl.bindTexture(gl.TEXTURE_2D, textures[0]);
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    viewport.settings.samples = 0;
 
     coordDisplay.innerHTML = `Coords: ${viewport.offset.pos.x} + ${viewport.offset.pos.y}i\nZoom: ${viewport.zoom.level}`;
 
@@ -311,11 +291,13 @@ function draw() {
         gl.bindTexture(gl.TEXTURE_2D, null);
 
         // Create secondary framebuffer
-        frameBuffers.push(gl.createFramebuffer()!);
         gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffers[1]);
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, textures[1], 0);
 
-        bufferIndex = 0;
+        bufferIndex = 1;
+    } else {
+        bufferIndex = 1;
+        antiAliasLoop();
     }
 }
 
@@ -333,7 +315,11 @@ function antiAliasLoop() {
     // Update uniforms
     viewport.settings.samples++;
     gl.uniform1i(samplesLocation, viewport.settings.samples);
-    gl.uniform2f(offsetLocation, Math.random()-0.5, Math.random()-0.5);
+    if (viewport.settings.samples > 1) {
+        gl.uniform2f(offsetLocation, Math.random()-0.5, Math.random()-0.5);
+    } else {
+        gl.uniform2f(offsetLocation, 0, 0);
+    }
 
     // Render to texture
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
