@@ -216,9 +216,10 @@ input[disabled] {
     margin-left: 5px
 }
 
-#smoothToggle, #juliaToggle {
+#smoothToggle, #juliaToggle, #aaToggle {
     justify-self: start;
     width: auto;
+    grid-column: 2/4;
 }
 
 :root {

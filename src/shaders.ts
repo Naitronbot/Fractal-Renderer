@@ -54,7 +54,10 @@ function getFragment(ast: ParseNode, settings: any): string {
     uniform vec2 u_resolution;
     uniform float u_angle;
     uniform vec3 u_transform;
+    uniform sampler2D u_texture;
+    uniform vec2 u_offset;
     
+    in vec2 uv;
     out vec4 fragColor;
 
     const float e = exp(1.0);
@@ -319,7 +322,7 @@ function getFragment(ast: ParseNode, settings: any): string {
         float shift = u_hueShift;
         x = pow(x,pow(1.1,u_bias));
         
-        if (u_color == 1) {
+        if (u_color == 1 || u_color == 10) {
             if (x >= 1.0 || x <= 0.0) {
                 return vec3(0.0);
             }
@@ -382,9 +385,21 @@ function getFragment(ast: ParseNode, settings: any): string {
         }
         float floatIter = float(u_iterations);
         float iter = floatIter;
+        float dist = 0.0;
         if (u_color == 2) {
             for (int i = 0; i < u_iterations; i++) {
                 z = f(z, c);
+            }
+        } else if (u_color == 10) {
+            vec2 lastIter;
+            for (int i = 0; i < u_iterations; i++) {
+                if (z.x*z.x + z.y*z.y > u_breakout*u_breakout) {
+                    iter = float(i);
+                    break;
+                }
+                lastIter = z;
+                z = f(z, c);
+                dist += length(z-lastIter);
             }
         } else {
             for (int i = 0; i < u_iterations; i++) {
@@ -406,40 +421,54 @@ function getFragment(ast: ParseNode, settings: any): string {
         // Output final color
         if (u_color == 2) {
             return vec4(domain(z), 1.0);
+        } else if (u_color == 10) {
+            return vec4(color(mod(dist/iter,1.0)), 1.0);
         } else {
             return vec4(color(iter/floatIter), 1.0);
         }
     }
     
     void main() {
-        vec2 pos;
+        vec2 pos = 2.0*(gl_FragCoord.xy+u_offset)/u_resolution-1.0;
         vec2 c;
         float aspect = u_resolution.x/u_resolution.y;
         
-        vec4 totalCol = vec4(0.0);
-        float samplesF = float(u_samples);
-
-        for (int i = 0; i < u_samples*u_samples; i++) {
-            vec2 offset = (vec2(i%u_samples,i/u_samples)+0.5*vec2(1.0-samplesF))/(samplesF+1.0);
-            vec2 pos = 2.0*(gl_FragCoord.xy+offset)/u_resolution-1.0;
-            c = vec2(pos.x * (aspect),pos.y);
-            // Fad mode
-            if (abs(u_angle) > 0.0) {
-                c = vec2(c.x*cos(u_angle) - c.y*sin(u_angle),c.x*sin(u_angle) + c.y*cos(u_angle));
-            }
-
-            c = c/u_transform.z + u_transform.xy;
-            totalCol += mainLoop(c);
+        c = vec2(pos.x * (aspect),pos.y);
+        // Fad mode
+        if (abs(u_angle) > 0.0) {
+            c = vec2(c.x*cos(u_angle) - c.y*sin(u_angle),c.x*sin(u_angle) + c.y*cos(u_angle));
         }
-        fragColor = totalCol/(samplesF*samplesF);
+
+        c = c/u_transform.z + u_transform.xy;
+        if (u_samples == 1) {
+            fragColor = mainLoop(c);
+        } else {
+            fragColor = pow((pow(texture(u_texture, uv),vec4(2.2)) * float(u_samples-1) + pow(mainLoop(c),vec4(2.2)))/float(u_samples),vec4(1.0/2.2));
+        }
     }`;
 }
 
 function getVertex(): string {
     return `#version 300 es
     in vec4 a_position;
+    out vec2 uv;
     
     void main() {
         gl_Position = a_position;
+        uv = 0.5*a_position.xy+0.5;
+    }`;
+}
+
+function getCanvasShader(): string {
+    return `#version 300 es
+    precision highp float;
+
+    uniform sampler2D u_texture;
+
+    in vec2 uv;
+    out vec4 fragColor;
+    
+    void main() {
+        fragColor = texture(u_texture,uv);
     }`;
 }

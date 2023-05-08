@@ -27,7 +27,7 @@
             <p id="coordDisplay"></p>
             <div class="button-wrapper">
                 <button title="Reset Offset/Zoom" id="resetButton" onclick="resetView()"><img src="refresh.svg"></button>
-                <button title="Download Screenshot" id="downloadButton" onclick="downloadCanvas()"><img src="download.svg"></button>
+                <button title="Download Screenshot" id="downloadButton" onclick="viewport.settings.antiAlias ? (viewport.settings.screenshot = true) : (downloadCanvas())"><img src="download.svg"></button>
                 <div class="share-wrapper button-wrapper">
                     <div id="sharePopup" style="display: none;"><input id="shareInput" readonly="readonly"><button onclick="SHARE_POPUP.style.display = 'none'"><img src="close.svg"></button></div>
                     <button title="Get Fractal URL" id="urlButton" onclick="shareURL()"><img src="share.svg"></button>
@@ -66,6 +66,7 @@
                 <select name="coloring mode" id="coloringMode">
                     <option value="1">Escape Time Hue</option>
                     <option value="2">Domain Coloring</option>
+                    <option value="10">Average Iteration Distance</option>
                     <option value="3">Escape Time Grayscale</option>
                     <option value="4">Escape Time Grayscale Inverted</option>
                     <option value="5">Feny</option>
@@ -80,9 +81,8 @@
                 <label title="Adjusts the hue by rotating it on the color wheel" id="hueShiftLabel" for="biasSlider">Hue Shift</label>
                 <input title="Adjusts the hue by rotating it on the color wheel" id="hueShiftSlider" type="range" min="0" step="0.01" max="360.00" value="0.00">
                 <input title="Adjusts the hue by rotating it on the color wheel" id="hueShiftBox" class="input-box" type="number" min="0.00" max="360.00" value="0">
-                <label title="Set the amount of samples to take per pixel, anti-aliases the image (can be quite low for large values)" id="aaLabel" for="aaSlider">Samples Per Pixel</label>
-                <input title="Set the amount of samples to take per pixel, anti-aliases the image (can be quite low for large values)" id="aaSlider" type="range" min="1" step="1" max="4" value="1">
-                <input title="Set the amount of samples to take per pixel, anti-aliases the image (can be quite low for large values)" id="aaBox" class="input-box" type="number" min="1" value="1">
+                <label title="Average subpixel samples over multiple frames to smooth out the image" id="aaLabel" for="aToggle">Anti Aliasing</label>
+                <input title="Average subpixel samples over multiple frames to smooth out the image" id="aaToggle" type="checkbox">
                 <label title="Ajust iteration count to make transition between iterations smoother (might break on non-mandelbrot fractals)" id="smoothLabel" for="smoothToggle">Smooth Coloring</label>
                 <input title="Ajust iteration count to make transition between iterations smoother (might break on non-mandelbrot fractals)" id="smoothToggle" type="checkbox">
             </div>

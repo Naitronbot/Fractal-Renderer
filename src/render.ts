@@ -114,7 +114,9 @@ const viewport: {[key: string]: any} = {
         smooth: false,
         fad: false,
         equation: "z^{2}+c",
-        samples: 1
+        samples: 1,
+        antiAlias: false,
+        screenshot: false
     }
 };
 
@@ -176,11 +178,13 @@ function setDefaults() {
     BIAS_SLIDER.value = viewport.settings.bias;
     BIAS_BOX.value = viewport.settings.bias;
     COLORING_MODE.value = viewport.settings.coloring;
-    AA_SLIDER.value = viewport.settings.samples;
-    AA_BOX.value = viewport.settings.samples**2 + "";
     toggleColoringActive();
 }
 
+let textureProgram: WebGLProgram;
+let canvasProgram: WebGLProgram;
+let samplesLocation: WebGLUniformLocation;
+let offsetLocation: WebGLUniformLocation;
 function setup(manual: boolean) {
     if (RECOMP_TOGGLE.checked && !manual) {
         return;
@@ -188,20 +192,29 @@ function setup(manual: boolean) {
 
     let vertexShader = createVertex();
     let fragmentShader = createFragment();
-    if (!vertexShader || !fragmentShader) {
+    let canvasShader = createCanvasShader();
+    if (!vertexShader || !fragmentShader || !canvasShader) {
         return;
     }
 
-    let program = gl.createProgram()!;
-    gl.attachShader(program, vertexShader);
-    gl.attachShader(program, fragmentShader);
-    gl.linkProgram(program);
+    textureProgram = gl.createProgram()!;
+    canvasProgram = gl.createProgram()!;
+    gl.attachShader(textureProgram, vertexShader);
+    gl.attachShader(textureProgram, fragmentShader);
+    gl.attachShader(canvasProgram, vertexShader);
+    gl.attachShader(canvasProgram, canvasShader);
+    gl.linkProgram(textureProgram);
+    gl.linkProgram(canvasProgram);
 
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        console.log(`LINK ERROR: ${gl.getProgramInfoLog(program)}`);
+    if (!gl.getProgramParameter(textureProgram, gl.LINK_STATUS)) {
+        console.log(`LINK ERROR: ${gl.getProgramInfoLog(textureProgram)}`);
         return;
     }
-    shaderUniforms = new ShaderUniformContainer(program);
+    if (!gl.getProgramParameter(canvasProgram, gl.LINK_STATUS)) {
+        console.log(`LINK ERROR: ${gl.getProgramInfoLog(canvasProgram)}`);
+        return;
+    }
+    shaderUniforms = new ShaderUniformContainer(textureProgram);
     shaderUniforms.add("u_transform", ()=>[viewport.offset.pos.x, viewport.offset.pos.y, viewport.zoom.log], UniformTypes.FLOAT);
     shaderUniforms.add("u_iterations", ()=>[viewport.settings.iterations], UniformTypes.INT);
     shaderUniforms.add("u_breakout", ()=>[viewport.settings.breakout], UniformTypes.FLOAT);
@@ -211,11 +224,12 @@ function setup(manual: boolean) {
     shaderUniforms.add("u_resolution", ()=>[viewport.width, viewport.height], UniformTypes.FLOAT);
     shaderUniforms.add("u_color", ()=>[viewport.settings.coloring], UniformTypes.INT);
     shaderUniforms.add("u_angle", ()=>[viewport.offset.angle], UniformTypes.FLOAT);
-    shaderUniforms.add("u_samples", ()=>[viewport.settings.samples], UniformTypes.INT);
 
-    gl.bindAttribLocation(program, 0, "zero");
+    samplesLocation = gl.getUniformLocation(textureProgram, "u_samples")!;
+    offsetLocation = gl.getUniformLocation(textureProgram, "u_offset")!;
 
-    gl.useProgram(program);
+    gl.bindAttribLocation(textureProgram, 0, "zero");
+    gl.bindAttribLocation(canvasProgram, 0, "zero");
 
     let vertexData = [-1, -1, -1, 1, 1, 1, -1, -1, 1, 1, 1, -1];
     let posBuffer = gl.createBuffer();
@@ -224,23 +238,130 @@ function setup(manual: boolean) {
 
     gl.enableVertexAttribArray(0);
 
-    let posAttrib = gl.getAttribLocation(program, "a_position");
+    let posAttrib = gl.getAttribLocation(textureProgram, "a_position");
     gl.enableVertexAttribArray(posAttrib);
     gl.vertexAttribPointer(posAttrib, 2, gl.FLOAT, false, 0, 0);
 
     requestAnimationFrame(draw);
 }
 
+let frameBuffers: WebGLFramebuffer[] = [];
+let textures: WebGLTexture[] = [];
+let bufferIndex = 0;
 function draw() {
+    // Ensure canvas is sized properly 
     resize();
+
+    // Clear textures and buffers
+    frameBuffers = [];
+    textures = [];
+
+    // Create main texture
+    textures.push(gl.createTexture()!);
+    gl.bindTexture(gl.TEXTURE_2D, textures[0]);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.canvas.width, gl.canvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+
+    // Setup framebuffer to render to texture
+    frameBuffers.push(gl.createFramebuffer()!);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffers[0]);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, textures[0], 0);
+
+    // Set program to render to texture
+    gl.useProgram(textureProgram);
+
+    // Asign all uniforms
+    shaderUniforms.assignAll();
+    viewport.settings.samples = 1;
+    gl.uniform1i(samplesLocation, 1);
+    gl.uniform2f(offsetLocation, 0, 0);
+
+    // Render to texture
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
-
-    shaderUniforms.assignAll();
-
     gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+    // Unbind framebuffer to render to canvas
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    // Switch to canvas program
+    gl.useProgram(canvasProgram);
+
+    // Render to canvas
+    gl.bindTexture(gl.TEXTURE_2D, textures[0]);
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+
     coordDisplay.innerHTML = `Coords: ${viewport.offset.pos.x} + ${viewport.offset.pos.y}i\nZoom: ${viewport.zoom.level}`;
+
+    if (viewport.settings.antiAlias) {
+        // Create secondary texture
+        textures.push(gl.createTexture()!);
+        gl.bindTexture(gl.TEXTURE_2D, textures[1]);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.canvas.width, gl.canvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.bindTexture(gl.TEXTURE_2D, null);
+
+        // Create secondary framebuffer
+        frameBuffers.push(gl.createFramebuffer()!);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffers[1]);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, textures[1], 0);
+
+        bufferIndex = 0;
+    }
+}
+
+function antiAliasLoop() {
+    bufferIndex = 1 - bufferIndex;
+
+    gl.useProgram(textureProgram);
+
+    // Bind current buffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffers[bufferIndex]);
+
+    // Bind current texture
+    gl.bindTexture(gl.TEXTURE_2D, textures[1 - bufferIndex]);
+
+    // Update uniforms
+    viewport.settings.samples++;
+    gl.uniform1i(samplesLocation, viewport.settings.samples);
+    gl.uniform2f(offsetLocation, Math.random()-0.5, Math.random()-0.5);
+
+    // Render to texture
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+    // Unbind framebuffer to render to canvas
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    // Switch to canvas program
+    gl.useProgram(canvasProgram);
+
+    // Render to canvas
+    gl.bindTexture(gl.TEXTURE_2D, textures[bufferIndex]);
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+    if (viewport.settings.screenshot) {
+        viewport.settings.screenshot = false;
+        downloadCanvas();
+    }
+
+    if (viewport.settings.antiAlias) {
+        requestAnimationFrame(antiAliasLoop);
+    }
 }
 
 function resize() {
@@ -288,6 +409,20 @@ function createFragment() {
     gl.deleteShader(shader);
 }
 
+function createCanvasShader() {
+    let raw = getCanvasShader();
+    let shader = gl.createShader(gl.FRAGMENT_SHADER)!;
+    gl.shaderSource(shader, raw);
+    gl.compileShader(shader);
+
+    if (gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        return shader;
+    }
+
+    console.log(`ERROR: ${gl.getShaderInfoLog(shader)}`);
+    gl.deleteShader(shader);
+}
+
 function pxToMath(px: Point): Point {
     return new Point(2.0*px.x/canvas.clientWidth*(viewport.width/viewport.height), 2.0*px.y/canvas.clientHeight);
 }
@@ -305,7 +440,9 @@ function resetView() {
 }
 
 function downloadCanvas() {
-    draw();
+    if (!viewport.settings.antiAlias) {
+        draw();
+    }
     canvas.toBlob((blob) => {
         if (blob === null) {
             throw new Error("Failed to download file");
