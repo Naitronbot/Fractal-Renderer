@@ -256,6 +256,8 @@ function draw() {
     // Ensure canvas is sized properly 
     resize();
 
+    gl.deleteTexture(textures[0]);
+    gl.deleteTexture(textures[1]);
     textures = [];
 
     // Create main texture
