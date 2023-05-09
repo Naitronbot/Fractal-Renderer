@@ -16,7 +16,7 @@ function recursiveDecompose(node: ParseNode): string {
     }
     if (node instanceof TwoOperatorNode) {
         if (node.operator === "+" || node.operator === "-") {
-            return recursiveDecompose(node.left) + node.operator + recursiveDecompose(node.right);
+            return `(${recursiveDecompose(node.left)}) ${node.operator} (${recursiveDecompose(node.right)})`;
         }
         if (node.operator === "*") {
             return `cm(${recursiveDecompose(node.left)},${recursiveDecompose(node.right)})`;
