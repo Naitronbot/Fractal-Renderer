@@ -277,6 +277,12 @@ function createTextures() {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.bindTexture(gl.TEXTURE_2D, null);
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffers[0]);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, textures[0], 0);
+    
+    gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffers[1]);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, textures[1], 0);
 }
 
 let bufferIndex = 0;
@@ -285,7 +291,6 @@ function draw() {
     resize();
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffers[0]);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, textures[0], 0);
 
     // Set program to render to texture
     gl.useProgram(textureProgram);
@@ -298,7 +303,6 @@ function draw() {
 
     if (viewport.settings.antiAlias) {
         gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffers[1]);
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, textures[1], 0);
 
         bufferIndex = 1;
     } else {
