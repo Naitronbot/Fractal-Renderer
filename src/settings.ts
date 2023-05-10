@@ -7,6 +7,9 @@ const COLORING_MODE = document.getElementById("coloringMode") as HTMLInputElemen
 const BIAS_LABEL = document.getElementById("biasLabel") as HTMLElement;
 const BIAS_BOX = document.getElementById("biasBox") as HTMLInputElement;
 const BIAS_SLIDER = document.getElementById("biasSlider") as HTMLInputElement;
+const DOMAIN_LABEL = document.getElementById("domainLabel") as HTMLElement;
+const DOMAIN_BOX = document.getElementById("domainBox") as HTMLInputElement;
+const DOMAIN_SLIDER = document.getElementById("domainSlider") as HTMLInputElement;
 const HUESHIFT_SLIDER = document.getElementById("hueShiftSlider") as HTMLInputElement;
 const HUESHIFT_BOX = document.getElementById("hueShiftBox") as HTMLInputElement;
 const JULIA_TOGGLE = document.getElementById("juliaToggle") as HTMLInputElement;
@@ -40,6 +43,7 @@ settingSetup(ITERATIONS_SLIDER, ITERATIONS_BOX, "iterations", false);
 settingSetup(BREAKOUT_SLIDER, BREAKOUT_BOX, "breakout", true);
 settingSetup(BIAS_SLIDER, BIAS_BOX, "bias", true);
 settingSetup(HUESHIFT_SLIDER, HUESHIFT_BOX, "hueShift", true);
+settingSetup(DOMAIN_SLIDER, DOMAIN_BOX, "domain", false);
 
 COLORING_MODE.addEventListener("change", () => {
     viewport.settings.coloring = parseInt(COLORING_MODE.value);
@@ -51,19 +55,25 @@ function toggleColoringActive() {
         BREAKOUT_LABEL.style.color = "#646464";
         BREAKOUT_BOX.disabled = true;
         BREAKOUT_SLIDER.disabled = true;
-        BIAS_LABEL.style.color = "#646464";
-        BIAS_BOX.disabled = true;
-        BIAS_SLIDER.disabled = true;
+        BIAS_LABEL.style.display = "none";
+        BIAS_BOX.style.display = "none";
+        BIAS_SLIDER.style.display = "none";
+        DOMAIN_LABEL.style.display = "";
+        DOMAIN_BOX.style.display = "";
+        DOMAIN_SLIDER.style.display = "";
         SMOOTH_LABEL.style.color = "#646464";
         SMOOTH_TOGGLE.disabled = true;
     } else {
         BREAKOUT_LABEL.style.color = "";
         BREAKOUT_BOX.disabled = false;
         BREAKOUT_SLIDER.disabled = false;
-        BIAS_LABEL.style.color = "";
-        BIAS_BOX.disabled = false;
-        BIAS_SLIDER.disabled = false;
-        SMOOTH_LABEL.style.color = "";
+        BIAS_LABEL.style.display = "";
+        BIAS_BOX.style.display = "";
+        BIAS_SLIDER.style.display = "";
+        DOMAIN_LABEL.style.display = "none";
+        DOMAIN_BOX.style.display = "none";
+        DOMAIN_SLIDER.style.display = "none";
+        SMOOTH_LABEL.style.color = "none";
         SMOOTH_TOGGLE.disabled = false;
     }
 }

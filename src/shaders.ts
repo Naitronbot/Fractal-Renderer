@@ -49,6 +49,7 @@ function getFragment(ast: ParseNode, settings: any): string {
     uniform int u_color;
     uniform float u_breakout;
     uniform float u_bias;
+    uniform int u_domain;
     uniform float u_hueShift;
     uniform int u_samples;
     uniform vec2 u_resolution;
@@ -62,6 +63,7 @@ function getFragment(ast: ParseNode, settings: any): string {
 
     const float e = exp(1.0);
     const float pi = 3.141592653589793;
+    const float phaseLines = 8.0;
 
     vec3 hsltorgb(vec3 colorHSL) {        
         float chroma = (1.0-abs(2.0*colorHSL.z-1.0)) * colorHSL.y;
@@ -367,11 +369,28 @@ function getFragment(ast: ParseNode, settings: any): string {
 
     vec3 domain(vec2 z) {
         float shift = u_hueShift;
+        float mag = length(z);
         float angle;
         angle = 180.0/pi * atan(z.y,z.x) + shift;
         angle = mod(angle,360.0);
         vec3 hsl = vec3(angle, 1.0, 0.5);
-        return hsltorgb(hsl);
+
+        float phaseConst;
+        float magConst;
+        if ((u_domain&1) == 1) {
+            phaseConst = (phaseLines/(2.0*pi))*mod(mod(carg(z).x,pi*2.0),pi/phaseLines)+0.5;
+        } else {
+            phaseConst = 1.0;
+        }
+        
+        if ((u_domain&2) == 2) {
+            float slope = 1.0/pow(2.0,floor(log(mag)/log(2.0)));
+            magConst = (slope*mag-floor(slope*mag))/2.0+0.5;
+        } else {
+            magConst = 1.0;
+        }
+
+        return (magConst+phaseConst)/2.0*hsltorgb(hsl);
     }
 
     vec4 mainLoop(vec2 c) {

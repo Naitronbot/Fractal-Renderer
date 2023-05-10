@@ -109,6 +109,7 @@ const viewport: {[key: string]: any} = {
         breakout: 10000,
         coloring: 1,
         bias: 0,
+        domain: 1,
         hueShift: 0,
         julia: false,
         smooth: false,
@@ -138,6 +139,7 @@ function loadQueryParams() {
     setParam(queryParams, paramTypes.bool, 'jm', 'julia');
     setParam(queryParams, paramTypes.num, 'cm', 'coloring');
     setParam(queryParams, paramTypes.num, 'cb', 'bias');
+    setParam(queryParams, paramTypes.num, 'dm', 'domain');
     setParam(queryParams, paramTypes.num, 'hs', 'hueShift');
     setParam(queryParams, paramTypes.bool, 'sm', 'smooth');
     setParam(queryParams, paramTypes.offset, 'px', 'x');
@@ -177,6 +179,8 @@ function setDefaults() {
     HUESHIFT_BOX.value = viewport.settings.hueShift;
     BIAS_SLIDER.value = viewport.settings.bias;
     BIAS_BOX.value = viewport.settings.bias;
+    DOMAIN_SLIDER.value = viewport.settings.domain;
+    DOMAIN_BOX.value = viewport.settings.domain;
     COLORING_MODE.value = viewport.settings.coloring;
     toggleColoringActive();
 }
@@ -220,6 +224,7 @@ function setup(manual: boolean) {
     shaderUniforms.add("u_iterations", ()=>[viewport.settings.iterations], UniformTypes.INT);
     shaderUniforms.add("u_breakout", ()=>[viewport.settings.breakout], UniformTypes.FLOAT);
     shaderUniforms.add("u_bias", ()=>[viewport.settings.bias], UniformTypes.FLOAT);
+    shaderUniforms.add("u_domain", ()=>[viewport.settings.domain - 1], UniformTypes.INT);
     shaderUniforms.add("u_hueShift", ()=>[viewport.settings.hueShift], UniformTypes.FLOAT);
     shaderUniforms.add("u_toggles", ()=>[viewport.settings.julia + 2*viewport.settings.smooth], UniformTypes.INT);
     shaderUniforms.add("u_resolution", ()=>[viewport.width, viewport.height], UniformTypes.FLOAT);
@@ -250,17 +255,13 @@ function setup(manual: boolean) {
     requestAnimationFrame(draw);
 }
 
-let bufferIndex = 0;
 let textures: WebGLTexture[] = [];
-function draw() {
-    // Ensure canvas is sized properly 
-    resize();
-
+function createTextures() {
+    console.log("aa");
     gl.deleteTexture(textures[0]);
     gl.deleteTexture(textures[1]);
     textures = [];
 
-    // Create main texture
     textures.push(gl.createTexture()!);
     gl.bindTexture(gl.TEXTURE_2D, textures[0]);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.canvas.width, gl.canvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
@@ -269,7 +270,20 @@ function draw() {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.bindTexture(gl.TEXTURE_2D, null);
 
-    // Setup framebuffer to render to texture
+    textures.push(gl.createTexture()!);
+    gl.bindTexture(gl.TEXTURE_2D, textures[1]);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.canvas.width, gl.canvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+}
+
+let bufferIndex = 0;
+function draw() {
+    // Ensure canvas is sized properly 
+    resize();
+
     gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffers[0]);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, textures[0], 0);
 
@@ -283,16 +297,6 @@ function draw() {
     coordDisplay.innerHTML = `Coords: ${viewport.offset.pos.x} + ${viewport.offset.pos.y}i\nZoom: ${viewport.zoom.level}`;
 
     if (viewport.settings.antiAlias) {
-        // Create secondary texture
-        textures.push(gl.createTexture()!);
-        gl.bindTexture(gl.TEXTURE_2D, textures[1]);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.canvas.width, gl.canvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.bindTexture(gl.TEXTURE_2D, null);
-
-        // Create secondary framebuffer
         gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffers[1]);
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, textures[1], 0);
 
@@ -353,16 +357,23 @@ function antiAliasLoop() {
 }
 
 function resize() {
+    let prevHeight = canvas.height;
+    let prevWidth = canvas.width;
     if (document.fullscreenElement || (document as any).mozFullScreenElement || (document as any).webkitFullscreenElement) {
         canvas.width = screen.width;
         canvas.height = screen.height;
         viewport.width = screen.width;
         viewport.height = screen.height;
-    } else if (CANVAS_WRAPPER.clientHeight !== canvas.height || CANVAS_WRAPPER.clientWidth != canvas.width) {
+    //} else if (CANVAS_WRAPPER.clientHeight * devicePixelRatio !== canvas.height || CANVAS_WRAPPER.clientWidth * devicePixelRatio != canvas.width) {
+    } else {
         canvas.height = CANVAS_WRAPPER.clientHeight * devicePixelRatio;
         canvas.width = CANVAS_WRAPPER.clientWidth * devicePixelRatio;
         viewport.width = CANVAS_WRAPPER.clientWidth * devicePixelRatio;
         viewport.height = CANVAS_WRAPPER.clientHeight * devicePixelRatio;
+    }
+
+    if (canvas.height != prevHeight || canvas.width != prevWidth) {
+        createTextures();
     }
 }
 
@@ -455,6 +466,7 @@ function getURL() {
     base += `&jm=${viewport.settings.julia+0}`;
     base += `&cm=${viewport.settings.coloring}`;
     base += `&cb=${viewport.settings.bias}`;
+    base += `&dm=${viewport.settings.domain}`;
     base += `&hs=${viewport.settings.hueShift}`;
     base += `&sm=${viewport.settings.smooth+0}`;
     base += `&px=${viewport.offset.pos.x}`;
