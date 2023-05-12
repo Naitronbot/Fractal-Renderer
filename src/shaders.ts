@@ -131,6 +131,14 @@ function getFragment(ast: ParseNode, settings: any): string {
         return vec2(atan(z.y,z.x),0);
     }
 
+    vec2 csign(vec2 z) {
+        return z/length(z);
+    }
+
+    vec2 csgn(vec2 z) {
+        return csign(z);
+    }
+
     vec2 cexp(vec2 z) {
         return exp(z.x)*vec2(cos(z.y),sin(z.y));
     }

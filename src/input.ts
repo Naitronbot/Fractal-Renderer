@@ -7,8 +7,7 @@ const INPUT_ELEMENTS = INPUT_GRID?.children as HTMLCollection;
 const MQ_FIELD = MQ.MathField(MQ_CONTAINER, {
     restrictMismatchedBrackets: true,
     autoCommands: 'pi sqrt Gamma',
-    // TODO IMPLIMENT LOG
-    autoOperatorNames: 'sin cos tan csc sec cot sinh cosh tanh csch sech coth arg arcsin arccos arctan arccsc arcsec arccot arcsinh arccosh arctanh arccsch arcsech arccoth ln log exp cis floor round ceil conj Re Im',
+    autoOperatorNames: 'sin cos tan csc sec cot sinh cosh tanh csch sech coth arcsin arccos arctan arccsc arcsec arccot arcsinh arccosh arctanh arccsch arcsech arccoth ln log abs arg sign sgn exp cis floor round ceil conj Re Im',
     supSubsRequireOperand: true,
     handlers: {
         edit: fieldEdit
