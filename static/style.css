@@ -66,6 +66,12 @@ button {
 
 #mqInput {
     max-width: 100%;
+    overflow: unset;
+    overflow-x: auto;
+}
+
+#mqInput span {
+    overflow: unset;
 }
 
 .mq-inner button {
