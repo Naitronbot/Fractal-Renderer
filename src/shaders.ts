@@ -132,6 +132,9 @@ function getFragment(ast: ParseNode, settings: any): string {
     }
 
     vec2 csign(vec2 z) {
+        if (z == vec2(0.0,0.0)) {
+            return z;
+        }
         return z/length(z);
     }
 
