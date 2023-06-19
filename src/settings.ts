@@ -19,13 +19,14 @@ const RECOMP_TOGGLE = document.getElementById("recompToggle") as HTMLInputElemen
 const AA_TOGGLE = document.getElementById("aaToggle") as HTMLInputElement;
 const FAD_TOGGLE = document.getElementById("fadToggle") as HTMLInputElement;
 const RECOMP_BUTTON = document.getElementById("recompButton") as HTMLElement;
+const ERROR_BOX = document.getElementById("errorBox") as HTMLElement;
 
-function settingSetup(slider: HTMLInputElement, box: HTMLInputElement, setting: string, float: boolean) {
+function settingSetup(slider: HTMLInputElement, box: HTMLInputElement, setting: settingVals, float: boolean) {
     slider.addEventListener("input", () => {
         box.value = slider.value;
         let num = (float) ? parseFloat(box.value) : parseInt(box.value);
         if (!isNaN(num)) {
-            viewport.settings[setting] = num;
+            (settings[setting] as number) = num;
         }
         requestAnimationFrame(draw);
     });
@@ -33,7 +34,7 @@ function settingSetup(slider: HTMLInputElement, box: HTMLInputElement, setting: 
         let num = (float) ? parseFloat(box.value) : parseInt(box.value);
         if (!isNaN(num)) {
             slider.value = num + "";
-            viewport.settings[setting] = num;
+            (settings[setting] as number) = num;
         }
         requestAnimationFrame(draw);
     });
@@ -46,12 +47,12 @@ settingSetup(HUESHIFT_SLIDER, HUESHIFT_BOX, "hueShift", true);
 settingSetup(DOMAIN_SLIDER, DOMAIN_BOX, "domain", false);
 
 COLORING_MODE.addEventListener("change", () => {
-    viewport.settings.coloring = parseInt(COLORING_MODE.value);
+    settings.coloring = parseInt(COLORING_MODE.value);
     toggleColoringActive();
     requestAnimationFrame(draw);
 });
 function toggleColoringActive() {
-    if (viewport.settings.coloring === 2) {
+    if (settings.coloring === 2) {
         BREAKOUT_LABEL.style.color = "#646464";
         BREAKOUT_BOX.disabled = true;
         BREAKOUT_SLIDER.disabled = true;
@@ -73,25 +74,25 @@ function toggleColoringActive() {
         DOMAIN_LABEL.style.display = "none";
         DOMAIN_BOX.style.display = "none";
         DOMAIN_SLIDER.style.display = "none";
-        SMOOTH_LABEL.style.color = "none";
+        SMOOTH_LABEL.style.color = "";
         SMOOTH_TOGGLE.disabled = false;
     }
 }
 
 JULIA_TOGGLE.addEventListener("change", () => {
-    viewport.settings.julia = JULIA_TOGGLE.checked;
+    settings.julia = JULIA_TOGGLE.checked;
     requestAnimationFrame(draw);
 });
 
 SMOOTH_TOGGLE.addEventListener("change", () => {
-    viewport.settings.smooth = SMOOTH_TOGGLE.checked;
+    settings.smooth = SMOOTH_TOGGLE.checked;
     requestAnimationFrame(draw);
 });
 
 AA_TOGGLE.addEventListener("change", () => {
-    viewport.settings.antiAlias = AA_TOGGLE.checked;
+    settings.antiAlias = AA_TOGGLE.checked;
     requestAnimationFrame(draw);
-    if (viewport.settings.antiAlias) {
+    if (settings.antiAlias) {
         requestAnimationFrame(antiAliasLoop);
     }
 });
@@ -106,10 +107,141 @@ RECOMP_TOGGLE.addEventListener("change", () => {
 
 FAD_TOGGLE.addEventListener("change", () => {
     if (FAD_TOGGLE.checked) {
-        viewport.settings.fad = true;
+        settings.fad = true;
     } else {
-        viewport.offset.angle = 0;
-        viewport.settings.fad = false;
+        settings.offset.angle = 0;
+        settings.fad = false;
     }
     requestAnimationFrame(draw);
 });
+
+// Sidebar
+const SIDEBAR = document.getElementById("sidebar")!;
+const SLIDER_BUTTON = document.getElementById("sliderButton")!;
+
+let sidebarVars: Set<string> = new Set();
+let sidebarVals: {[key: string]: number} = {};
+
+class Slider {
+    varName: string;
+    element: HTMLDivElement | undefined;
+    sliderElem!: HTMLInputElement;
+    inputElem!: HTMLInputElement;
+    constructor(varName: string, value?: string, min?: string, max?: string, step?: string) {
+        this.varName = varName;
+        sidebarVars.add(varName);
+        this.render(value, min, max, step);
+    }
+
+    render(value?: string, min?: string, max?: string, step?: string) {
+        this.element = document.createElement("div");
+        this.element.classList.add("slider-wrapper");
+
+        let sliderTitle = document.createElement("p");
+        sliderTitle.innerHTML = this.varName;
+        this.element.append(sliderTitle);
+
+        let sliderDiv = document.createElement("div");
+        this.element.append(sliderDiv);
+
+        this.sliderElem = document.createElement("input");
+        this.sliderElem.addEventListener('input', () => this.update(this.sliderElem.value, true));
+        this.sliderElem.type = "range";
+        this.sliderElem.min = min || "-10";
+        this.sliderElem.max = max || "10";
+        this.sliderElem.step = step || "0.01";
+        sliderDiv.append(this.sliderElem);
+
+        this.inputElem = document.createElement("input");
+        this.inputElem.addEventListener('input', () => this.update(this.inputElem.value, false));
+        this.inputElem.classList.add("input-box");
+        this.inputElem.type = "number";
+        sliderDiv.append(this.inputElem);
+
+        let boundsDiv = document.createElement("div");
+        this.element.append(boundsDiv);
+
+        const addText = (text: string) => {
+            let pTag = document.createElement("p");
+            pTag.innerHTML = text;
+            boundsDiv.append(pTag);
+        };
+
+        const createInput = (defaultValue: string, callback: (value: string) => void) => {
+            let element = document.createElement("input");
+            element.addEventListener('input', () => callback(element.value));
+            element.classList.add("input-box");
+            element.type = "number";
+            element.value = defaultValue;
+            return element;
+        }
+
+        addText("Min: ");
+        boundsDiv.append(createInput(min || "-10", value => this.sliderElem.min = value));
+
+        addText("Max: ");
+        boundsDiv.append(createInput(max || "10", value => this.sliderElem.max = value));
+
+        addText("Step: ");
+        boundsDiv.append(createInput(step || "0.01", value => this.sliderElem.step = value));
+
+        let closeButton = document.createElement("button");
+        closeButton.addEventListener('mouseup', e => e.button === 0 && this.delete());
+        closeButton.innerHTML = "<img src=\"close.svg\">";
+        this.element.append(closeButton);
+
+        this.update(value || "1", true);
+
+        SIDEBAR.append(this.element);
+    }
+
+    update(val: string, slider: boolean) {
+        sidebarVals[this.varName] = parseFloat(val);
+        this.sliderElem.value = val;
+        if (slider) {
+            this.inputElem.value = val;
+        }
+        if (Parser.current.userVars.has(this.varName)) {
+            requestAnimationFrame(draw);
+        }
+    }
+
+    delete() {
+        this.element?.remove();
+        sidebarVars.delete(this.varName);
+        delete sidebarVals[this.varName];
+        for (let val of Parser.current.userVars) {
+            if (!sidebarVars.has(val)) {
+                Parser.current.manageVariables();
+                setup(true);
+                break;
+            }
+        }
+        requestAnimationFrame(draw);
+    }
+}
+
+function updateSidebar() {
+    if (SLIDER_BUTTON.classList.contains("disabled")) {
+        return;
+    }
+    SLIDER_BUTTON?.classList.add("disabled");
+    if (!Parser.current) {
+        return;
+    }
+    let newVars: string[] = [];
+    Parser.current.userVars.forEach(val => {
+        if (!sidebarVars.has(val)) {
+            newVars.push(val);
+        }
+    });
+    if (newVars.length > 0) {
+        for (let val of newVars) {
+            new Slider(val);
+        }
+    }
+    Parser.current.manageVariables();
+    setup(true);
+    ERROR_BOX.innerHTML = "";
+    ERROR_BOX.style.display = "none";
+}

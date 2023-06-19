@@ -28,12 +28,14 @@ class Point {
     }
 }
 
+// Structure for setting, binding, and updating shader uniforms
 const enum UniformTypes {FLOAT, INT};
 class ShaderUniformContainer {
+    program: WebGLProgram;
     private uniformLocations: WebGLUniformLocation[];
     private uniformValues: Function[];
     private uniformTypes: UniformTypes[];
-    program: WebGLProgram;
+
     constructor(program: WebGLProgram) {
         this.program = program;
         this.uniformLocations = [];
@@ -56,6 +58,9 @@ class ShaderUniformContainer {
             let values = this.uniformValues[i]() as number[];
             let len = values.length;
             if (this.uniformTypes[i] === UniformTypes.FLOAT) {
+                if (values[0] === undefined) {
+                    return;
+                }
                 if (len === 1) {
                     gl.uniform1fv(this.uniformLocations[i], values);
                 } else if (len === 2) {
@@ -86,9 +91,35 @@ class ShaderUniformContainer {
     }
 }
 
-const viewport: {[key: string]: any} = {
+// Contains all information about the current viewport
+const viewport = {
     width: 0,
     height: 0,
+    pointer: {
+        lastPos: new Point(0,0),
+        lastDist: 0,
+        dist: 0,
+        lastAngle: 0,
+        dragging: false
+    }
+};
+
+// Settings for the current fractal
+type settingVals = keyof typeof settings;
+const settings = {
+    iterations: 500,
+    breakout: 10000,
+    coloring: 1,
+    bias: 0,
+    domain: 1,
+    hueShift: 0,
+    julia: false,
+    smooth: false,
+    fad: false,
+    equation: "z^{2}+c",
+    samples: 1,
+    antiAlias: false,
+    screenshot: false,
     zoom: {
         level: 0,
         log: 1
@@ -97,117 +128,133 @@ const viewport: {[key: string]: any} = {
         pos: new Point(0,0),
         angle: 0
     },
-    pointer: {
-        lastPos: new Point(0,0),
-        lastDist: 0,
-        dist: 0,
-        lastAngle: 0,
-        dragging: false
-    },
-    settings: {
-        iterations: 500,
-        breakout: 10000,
-        coloring: 1,
-        bias: 0,
-        domain: 1,
-        hueShift: 0,
-        julia: false,
-        smooth: false,
-        fad: false,
-        equation: "z^{2}+c",
-        samples: 1,
-        antiAlias: false,
-        screenshot: false
-    }
 };
 
-let currentAST: ParseNode;
+// let currentError = "";
+// let currentAST: ParseNode;
+//let currentVars = new Set<string>();
 let shaderUniforms: ShaderUniformContainer;
 
-loadQueryParams();
+const enum paramTypes {string, bool, num, user, offsetX, offsetY, zoom};
+const paramNames: {[key:string]: [paramTypes, settingVals?]} = {
+    "eq": [paramTypes.string, "equation"],
+    "it": [paramTypes.num, "iterations"],
+    "bk": [paramTypes.num, "breakout"],
+    "jm": [paramTypes.bool, "julia"],
+    "cm": [paramTypes.num, "coloring"],
+    "cb": [paramTypes.num, "bias"],
+    "dm": [paramTypes.num, "domain"],
+    "hs": [paramTypes.num, "hueShift"],
+    "sm": [paramTypes.bool, "smooth"],
+    "px": [paramTypes.offsetX],
+    "py": [paramTypes.offsetY],
+    "zm": [paramTypes.zoom]
+};
 
-const enum paramTypes {string, bool, num, offset, zoom}
+loadQueryParams();
 function loadQueryParams() {
     const queryParams = new URLSearchParams(window.location.search);
     let iter = queryParams.get('it');
     if (iter !== null && parseInt(iter) > 1000 && !confirm(`High iteration count detected (${iter}), this may lag, would you like to proceed anyways?`)) {
+        setDefaults();
         return;
     }
-    setParam(queryParams, paramTypes.string, 'eq', 'equation');
-    setParam(queryParams, paramTypes.num, 'it', 'iterations');
-    setParam(queryParams, paramTypes.num, 'bk', 'breakout');
-    setParam(queryParams, paramTypes.bool, 'jm', 'julia');
-    setParam(queryParams, paramTypes.num, 'cm', 'coloring');
-    setParam(queryParams, paramTypes.num, 'cb', 'bias');
-    setParam(queryParams, paramTypes.num, 'dm', 'domain');
-    setParam(queryParams, paramTypes.num, 'hs', 'hueShift');
-    setParam(queryParams, paramTypes.bool, 'sm', 'smooth');
-    setParam(queryParams, paramTypes.offset, 'px', 'x');
-    setParam(queryParams, paramTypes.offset, 'py', 'y');
-    setParam(queryParams, paramTypes.zoom, 'zm', 'level/log');
+    queryParams.forEach((value, key) => {
+        let paramData = paramNames[key];
+        if (paramData !== undefined) {
+            setParam(value, paramData[0], paramData[1]);
+        } else if (key.startsWith("uv")) {
+            setParam(value, paramTypes.user, undefined, key);
+        }
+    });
     setDefaults();
 }
 
-function setParam(params: URLSearchParams, type: paramTypes, param: string, setting: string) {
-    const currentParam = params.get(param);
-    if (currentParam === null) {
+function setParam(value: string, type: paramTypes, setting?: settingVals, userVar?: string) {
+    if (value === null) {
+        return;
+    }
+    if (setting === undefined) {
+        if (type === paramTypes.offsetX) {
+            settings.offset.pos.x = parseFloat(value);
+        } else if (type === paramTypes.offsetY) {
+            settings.offset.pos.y = parseFloat(value);
+        } else if (type === paramTypes.zoom) {
+            settings.zoom.level = parseFloat(value);
+            settings.zoom.log = Math.pow(2,settings.zoom.level);
+        }
         return;
     }
     if (type === paramTypes.string) {
-        viewport.settings[setting!] = decodeURI(currentParam);
+        (settings[setting] as string) = decodeURI(value);
     } else if (type === paramTypes.bool) {
-        viewport.settings[setting!] = currentParam === '1' ? 1 : 0;
+        (settings[setting] as boolean) = value === '1' ? true : false;
     } else if (type === paramTypes.num) {
-        viewport.settings[setting!] = parseFloat(currentParam);
-    } else if (type === paramTypes.offset) {
-        viewport.offset.pos[setting!] = parseFloat(currentParam);
-    } else if (type === paramTypes.zoom) {
-        const zoom = parseFloat(currentParam)
-        viewport.zoom.level = zoom;
-        viewport.zoom.log = Math.pow(2,viewport.zoom.level);
+        (settings[setting] as number) = parseFloat(value);
+    } else if (type === paramTypes.user) {
+        let values = value.split("/");
+        if (values.length === 4) {
+            new Slider(userVar!.split("uv")[1], values[0], values[1], values[2], values[3]);
+        }
     }
 }
 
 function setDefaults() {
-    ITERATIONS_SLIDER.value = viewport.settings.iterations;
-    ITERATIONS_BOX.value = viewport.settings.iterations;
-    BREAKOUT_SLIDER.value = viewport.settings.breakout;
-    BREAKOUT_BOX.value = viewport.settings.breakout;
-    JULIA_TOGGLE.checked = viewport.settings.julia;
-    SMOOTH_TOGGLE.checked = viewport.settings.smooth;
-    HUESHIFT_SLIDER.value = viewport.settings.hueShift;
-    HUESHIFT_BOX.value = viewport.settings.hueShift;
-    BIAS_SLIDER.value = viewport.settings.bias;
-    BIAS_BOX.value = viewport.settings.bias;
-    DOMAIN_SLIDER.value = viewport.settings.domain;
-    DOMAIN_BOX.value = viewport.settings.domain;
-    COLORING_MODE.value = viewport.settings.coloring;
+    ITERATIONS_SLIDER.value = settings.iterations+"";
+    ITERATIONS_BOX.value = settings.iterations+"";
+    BREAKOUT_SLIDER.value = settings.breakout+"";
+    BREAKOUT_BOX.value = settings.breakout+"";
+    JULIA_TOGGLE.checked = settings.julia;
+    SMOOTH_TOGGLE.checked = settings.smooth;
+    HUESHIFT_SLIDER.value = settings.hueShift+"";
+    HUESHIFT_BOX.value = settings.hueShift+"";
+    BIAS_SLIDER.value = settings.bias+"";
+    BIAS_BOX.value = settings.bias+"";
+    DOMAIN_SLIDER.value = settings.domain+"";
+    DOMAIN_BOX.value = settings.domain+"";
+    COLORING_MODE.value = settings.coloring+"";
     toggleColoringActive();
 }
 
-let textureProgram: WebGLProgram;
-let canvasProgram: WebGLProgram;
+let textureProgram = gl.createProgram()!;
+let canvasProgram = gl.createProgram()!;
 let samplesLocation: WebGLUniformLocation;
 let offsetLocation: WebGLUniformLocation;
 let frameBuffers: WebGLFramebuffer[] = [];
+
+{
+    let vertexShader = createVertex();
+    let canvasShader = createCanvasShader();
+    if (!vertexShader || !canvasShader) {
+        throw new Error("WebGL Error: Canvas shader failed");
+    }
+
+    gl.attachShader(canvasProgram, canvasShader);
+    gl.attachShader(canvasProgram, vertexShader);
+    gl.attachShader(textureProgram, vertexShader);
+}
+
+let fragmentShader: WebGLShader | undefined;
 function setup(manual: boolean) {
+    if (!Parser.current.success || Parser.current.needsVars) {
+        return;
+    }
+
     if (RECOMP_TOGGLE.checked && !manual) {
         return;
     }
 
-    let vertexShader = createVertex();
-    let fragmentShader = createFragment();
-    let canvasShader = createCanvasShader();
-    if (!vertexShader || !fragmentShader || !canvasShader) {
+    if (fragmentShader) {
+        gl.detachShader(textureProgram, fragmentShader);
+        gl.deleteShader(fragmentShader);
+    }
+
+    fragmentShader = createFragment();
+    if (!fragmentShader) {
         return;
     }
 
-    textureProgram = gl.createProgram()!;
-    canvasProgram = gl.createProgram()!;
-    gl.attachShader(textureProgram, vertexShader);
     gl.attachShader(textureProgram, fragmentShader);
-    gl.attachShader(canvasProgram, vertexShader);
-    gl.attachShader(canvasProgram, canvasShader);
     gl.linkProgram(textureProgram);
     gl.linkProgram(canvasProgram);
 
@@ -220,20 +267,26 @@ function setup(manual: boolean) {
         return;
     }
     shaderUniforms = new ShaderUniformContainer(textureProgram);
-    shaderUniforms.add("u_transform", ()=>[viewport.offset.pos.x, viewport.offset.pos.y, viewport.zoom.log], UniformTypes.FLOAT);
-    shaderUniforms.add("u_iterations", ()=>[viewport.settings.iterations], UniformTypes.INT);
-    shaderUniforms.add("u_breakout", ()=>[viewport.settings.breakout], UniformTypes.FLOAT);
-    shaderUniforms.add("u_bias", ()=>[viewport.settings.bias], UniformTypes.FLOAT);
-    shaderUniforms.add("u_domain", ()=>[viewport.settings.domain - 1], UniformTypes.INT);
-    shaderUniforms.add("u_hueShift", ()=>[viewport.settings.hueShift], UniformTypes.FLOAT);
-    shaderUniforms.add("u_toggles", ()=>[viewport.settings.julia + 2*viewport.settings.smooth], UniformTypes.INT);
+    shaderUniforms.add("u_transform", ()=>[settings.offset.pos.x, settings.offset.pos.y, settings.zoom.log], UniformTypes.FLOAT);
+    shaderUniforms.add("u_iterations", ()=>[settings.iterations], UniformTypes.INT);
+    shaderUniforms.add("u_breakout", ()=>[settings.breakout], UniformTypes.FLOAT);
+    shaderUniforms.add("u_bias", ()=>[settings.bias], UniformTypes.FLOAT);
+    shaderUniforms.add("u_domain", ()=>[settings.domain - 1], UniformTypes.INT);
+    shaderUniforms.add("u_hueShift", ()=>[settings.hueShift], UniformTypes.FLOAT);
+    shaderUniforms.add("u_toggles", ()=>[+settings.julia + 2*+settings.smooth], UniformTypes.INT);
     shaderUniforms.add("u_resolution", ()=>[viewport.width, viewport.height], UniformTypes.FLOAT);
-    shaderUniforms.add("u_color", ()=>[viewport.settings.coloring], UniformTypes.INT);
-    shaderUniforms.add("u_angle", ()=>[viewport.offset.angle], UniformTypes.FLOAT);
+    shaderUniforms.add("u_color", ()=>[settings.coloring], UniformTypes.INT);
+    shaderUniforms.add("u_angle", ()=>[settings.offset.angle], UniformTypes.FLOAT);
+    for (let userVar of Parser.current.userVars) {
+        shaderUniforms.add("u_" + userVar, ()=>[sidebarVals[userVar], 0], UniformTypes.FLOAT);
+    }
 
     samplesLocation = gl.getUniformLocation(textureProgram, "u_samples")!;
     offsetLocation = gl.getUniformLocation(textureProgram, "u_offset")!;
     
+    for (let buffer of frameBuffers) {
+        gl.deleteFramebuffer(buffer);
+    }
     frameBuffers = [];
     frameBuffers.push(gl.createFramebuffer()!);
     frameBuffers.push(gl.createFramebuffer()!);
@@ -291,11 +344,11 @@ function draw() {
 
     // Asign all uniforms
     shaderUniforms.assignAll();
-    viewport.settings.samples = 0;
+    settings.samples = 0;
 
-    coordDisplay.innerHTML = `Coords: ${viewport.offset.pos.x} + ${viewport.offset.pos.y}i\nZoom: ${viewport.zoom.level}`;
+    coordDisplay.innerHTML = `Offset: ${settings.offset.pos.x} + ${settings.offset.pos.y}i\nZoom: 2<sup>${Math.round(settings.zoom.level * 1000) / 1000}</sup>`;
 
-    if (viewport.settings.antiAlias) {
+    if (settings.antiAlias) {
         gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffers[1]);
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, textures[1], 0);
 
@@ -318,9 +371,9 @@ function antiAliasLoop() {
     gl.bindTexture(gl.TEXTURE_2D, textures[1 - bufferIndex]);
 
     // Update uniforms
-    viewport.settings.samples++;
-    gl.uniform1i(samplesLocation, viewport.settings.samples);
-    if (viewport.settings.samples > 1) {
+    settings.samples++;
+    gl.uniform1i(samplesLocation, settings.samples);
+    if (settings.samples > 1) {
         gl.uniform2f(offsetLocation, Math.random()-0.5, Math.random()-0.5);
     } else {
         gl.uniform2f(offsetLocation, 0, 0);
@@ -345,12 +398,12 @@ function antiAliasLoop() {
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-    if (viewport.settings.screenshot) {
-        viewport.settings.screenshot = false;
+    if (settings.screenshot) {
+        settings.screenshot = false;
         downloadCanvas();
     }
 
-    if (viewport.settings.antiAlias) {
+    if (settings.antiAlias) {
         requestAnimationFrame(antiAliasLoop);
     }
 }
@@ -391,10 +444,7 @@ function createVertex() {
 }
 
 function createFragment() {
-    if (currentAST === null) {
-        throw new Error("WebGL Error: No equation provided");
-    }
-    let raw = getFragment(currentAST, viewport.settings);
+    let raw = getFragment();
     let shader = gl.createShader(gl.FRAGMENT_SHADER)!;
     gl.shaderSource(shader, raw);
     gl.compileShader(shader);
@@ -430,15 +480,15 @@ function pxToCanvas(px: Point): Point {
 }
 
 function resetView() {
-    viewport.zoom.level = 0;
-    viewport.zoom.log = 1;
-    viewport.offset.pos.x = 0;
-    viewport.offset.pos.y = 0;
+    settings.zoom.level = 0;
+    settings.zoom.log = 1;
+    settings.offset.pos.x = 0;
+    settings.offset.pos.y = 0;
     requestAnimationFrame(draw);
 }
 
 function downloadCanvas() {
-    if (!viewport.settings.antiAlias) {
+    if (!settings.antiAlias) {
         draw();
     }
     canvas.toBlob((blob) => {
@@ -459,18 +509,18 @@ function downloadCanvas() {
 function getURL() {
     setup(true);
     let base = window.location.href.split("?")[0];
-    base += `?eq=${encodeURIComponent(viewport.settings.equation)}`;
-    base += `&it=${viewport.settings.iterations}`;
-    base += `&bk=${viewport.settings.breakout}`;
-    base += `&jm=${viewport.settings.julia+0}`;
-    base += `&cm=${viewport.settings.coloring}`;
-    base += `&cb=${viewport.settings.bias}`;
-    base += `&dm=${viewport.settings.domain}`;
-    base += `&hs=${viewport.settings.hueShift}`;
-    base += `&sm=${viewport.settings.smooth+0}`;
-    base += `&px=${viewport.offset.pos.x}`;
-    base += `&py=${viewport.offset.pos.y}`;
-    base += `&zm=${viewport.zoom.level}`;
+    base += `?eq=${encodeURIComponent(settings.equation)}`;
+    base += `&it=${settings.iterations}`;
+    base += `&bk=${settings.breakout}`;
+    base += `&jm=${+settings.julia}`;
+    base += `&cm=${settings.coloring}`;
+    base += `&cb=${settings.bias}`;
+    base += `&dm=${settings.domain}`;
+    base += `&hs=${settings.hueShift}`;
+    base += `&sm=${+settings.smooth}`;
+    base += `&px=${settings.offset.pos.x}`;
+    base += `&py=${settings.offset.pos.y}`;
+    base += `&zm=${settings.zoom.level}`;
     return base;
 }
 
@@ -490,131 +540,4 @@ function shareURL() {
     SHARE_POPUP.style.display = "flex";
     SHARE_INPUT.value = getURL();
     SHARE_INPUT.select();
-}
-
-window.addEventListener("resize", e => {
-    fixGrid();
-    requestAnimationFrame(draw);
-});
-
-
-document.addEventListener("mousemove", e => {
-    if (e.buttons === 1 && viewport.pointer.dragging) {
-        let canvasCoords = canvas.getBoundingClientRect();
-        let clickPos = new Point(e.clientX - canvasCoords.left, e.clientY - canvasCoords.top);
-        let touchOffset = new Point(clickPos.x - viewport.pointer.lastPos.x, clickPos.y - viewport.pointer.lastPos.y);
-        moveDrag(touchOffset);
-        viewport.pointer.lastPos = clickPos;
-        requestAnimationFrame(draw);
-    }
-});
-canvas.addEventListener("mousedown", e => {
-    document.body.style.userSelect = "none";
-    let canvasCoords = canvas.getBoundingClientRect();
-    let clickPos = new Point(e.clientX - canvasCoords.left, e.clientY - canvasCoords.top);
-    viewport.pointer.lastPos = clickPos;
-    viewport.pointer.dragging = true;
-});
-document.addEventListener("mouseup", () => {
-    document.body.style.userSelect = "";
-    viewport.pointer.dragging = false;
-});
-canvas.addEventListener("wheel", e => {
-    zoomScreen(new Point(e.offsetX,e.offsetY),-0.002*e.deltaY);
-    requestAnimationFrame(draw);
-});
-
-document.addEventListener("touchmove", e => {
-    if (viewport.pointer.dragging) {
-        e.preventDefault();
-        let touches = getTouches(e);
-        let touchOffset = new Point(touches.center[0] - viewport.pointer.lastPos.x, touches.center[1] - viewport.pointer.lastPos.y);
-        if (viewport.settings.fad) {
-            moveDrag(touchOffset, viewport.offset.angle);
-        } else {
-            moveDrag(touchOffset);
-        }
-        let zoomFactor;
-        if (viewport.pointer.dist > 0) {
-            zoomFactor = touches.dist / viewport.pointer.dist;
-        } else {
-            zoomFactor = 1;
-        }
-        let centerPoint = Point.fromArray(touches.center);
-        scaleScreen(centerPoint, zoomFactor);
-
-        let angleDif = touches.angle - viewport.pointer.lastAngle;
-        if (viewport.settings.fad) {
-            viewport.offset.angle += Math.atan2(Math.sin(angleDif),Math.cos(angleDif));
-        }
-        viewport.pointer.lastPos = centerPoint;
-        viewport.pointer.lastAngle = touches.angle;
-        viewport.pointer.dist = touches.dist;
-        requestAnimationFrame(draw);
-    }
-});
-
-canvas.addEventListener("touchstart", e => {
-    e.preventDefault();
-    document.body.style.userSelect = "none";
-    let touches = getTouches(e);
-    viewport.pointer.lastPos = Point.fromArray(touches.center);
-    viewport.pointer.lastAngle = touches.angle;
-    viewport.pointer.dist = touches.dist;
-    viewport.pointer.dragging = true;
-});
-document.addEventListener("touchend", e => {
-    document.body.style.userSelect = "";
-    viewport.pointer.dragging = false;
-});
-
-
-function moveDrag(coords: Point, angle?: number) {
-    let movePos = pxToMath(coords);
-    if (angle !== undefined) {
-        movePos = new Point(movePos.x * Math.cos(-angle) - movePos.y * Math.sin(-angle), movePos.x * Math.sin(-angle) + movePos.y * Math.cos(-angle));
-    }
-    viewport.offset.pos.x = viewport.offset.pos.x - movePos.x/viewport.zoom.log;
-    viewport.offset.pos.y = viewport.offset.pos.y + movePos.y/viewport.zoom.log;
-}
-
-function zoomScreen(coords: Point, zoomAmt: number) {
-    let zoomPoint = pxToCanvas(coords);
-    viewport.offset.pos.x = viewport.offset.pos.x + zoomPoint.x/viewport.zoom.log;
-    viewport.offset.pos.y = viewport.offset.pos.y - zoomPoint.y/viewport.zoom.log;
-    viewport.zoom.level += zoomAmt;
-    viewport.zoom.log = Math.pow(2,viewport.zoom.level);
-    viewport.offset.pos.x = viewport.offset.pos.x - zoomPoint.x/viewport.zoom.log;
-    viewport.offset.pos.y = viewport.offset.pos.y + zoomPoint.y/viewport.zoom.log;
-}
-
-function scaleScreen(coords: Point, zoomAmt: number) {
-    let zoomPoint = pxToCanvas(coords);
-    viewport.offset.pos.x = viewport.offset.pos.x + zoomPoint.x/viewport.zoom.log;
-    viewport.offset.pos.y = viewport.offset.pos.y - zoomPoint.y/viewport.zoom.log;
-    viewport.zoom.log *= zoomAmt;
-    viewport.zoom.level = Math.log2(viewport.zoom.log);
-    viewport.offset.pos.x = viewport.offset.pos.x - zoomPoint.x/viewport.zoom.log;
-    viewport.offset.pos.y = viewport.offset.pos.y + zoomPoint.y/viewport.zoom.log;
-}
-
-function getTouches(e: TouchEvent) {
-    let canvasCoords = canvas.getBoundingClientRect();
-    if (e.touches.length === 1) {
-        return {center: [(e.targetTouches[0].pageX - canvasCoords.left), (e.targetTouches[0].pageY - canvasCoords.top)], dist: 0, angle: viewport.pointer.lastAngle};
-    } else {
-        let total = [0, 0];
-        for (let i = 0; i < e.touches.length; i++) {
-            total = [total[0] + (e.targetTouches[i].pageX - canvasCoords.left), total[1] + (e.targetTouches[i].pageY - canvasCoords.top)];
-        }
-        let centerPoint = [total[0]/e.touches.length,total[1]/e.touches.length];
-        let centerDistance = Math.sqrt(Math.pow(centerPoint[0] - (e.targetTouches[0].pageX - canvasCoords.left), 2) + Math.pow(centerPoint[1] - (e.targetTouches[0].pageY - canvasCoords.top), 2));
-        let angle;
-        if (viewport.settings.fad) {
-            angle = Math.atan2((e.targetTouches[1].pageY - canvasCoords.top)-(e.targetTouches[0].pageY - canvasCoords.top), (e.targetTouches[1].pageX - canvasCoords.top)-(e.targetTouches[0].pageX - canvasCoords.left))%(2*Math.PI);
-        } else {
-            angle = viewport.offset.angle;
-        }
-        return {center: centerPoint, dist: centerDistance, angle: angle};
-    }
 }

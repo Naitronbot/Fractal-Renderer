@@ -17,17 +17,21 @@
     <script src="render.js" defer></script>
     <script src="parser.js" defer></script>
     <script src="input.js" defer></script>
+    <script src="events.js" defer></script>
 </head>
 <body>
+    <div id="sidebar">
+        <button class="disabled" id="sliderButton" onclick="updateSidebar()">Add Sliders</button>
+    </div>
     <div class="main">
         <div id="canvasWrapper" class="canvas-wrapper">
             <canvas id="webGLCanvas" width="300px" height="300px"></canvas>
         </div>
-        <div class="button-wrapper">
+        <div class="button-wrapper info-wrapper">
             <p id="coordDisplay"></p>
             <div class="button-wrapper">
                 <button title="Reset Offset/Zoom" id="resetButton" onclick="resetView()"><img src="refresh.svg"></button>
-                <button title="Download Screenshot" id="downloadButton" onclick="viewport.settings.antiAlias ? (viewport.settings.screenshot = true) : (downloadCanvas())"><img src="download.svg"></button>
+                <button title="Download Screenshot" id="downloadButton" onclick="settings.antiAlias ? (settings.screenshot = true) : (downloadCanvas())"><img src="download.svg"></button>
                 <div class="share-wrapper button-wrapper">
                     <div id="sharePopup" style="display: none;"><input id="shareInput" readonly="readonly"><button onclick="SHARE_POPUP.style.display = 'none'"><img src="close.svg"></button></div>
                     <button title="Get Fractal URL" id="urlButton" onclick="shareURL()"><img src="share.svg"></button>

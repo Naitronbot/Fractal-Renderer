@@ -6,6 +6,7 @@ body {
     height: -webkit-fill-available;
     overflow: hidden;
     background-color: #242424;
+    display: flex;
 }
 
 * {
@@ -15,10 +16,83 @@ body {
 .main {
     height: 100%;
     height: -webkit-fill-available;
-    width: 80%;
+    width: calc(100% - max(300px, 20%));
     display: flex;
     flex-direction: column;
-    margin-left: 10%;
+}
+
+#sidebar {
+    min-width: 300px;
+    width: 20%;
+    display: flex;
+    gap: 20px;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+#sidebar p {
+    color: white;
+    margin: 0;
+}
+
+.slider-wrapper {
+    position: relative;
+    user-select: none;
+    padding: 10px;
+}
+
+.slider-wrapper > p {
+    font-size: 22px;
+    width: calc(100% - 50px);
+    overflow: hidden;
+}
+
+.slider-wrapper div {
+    display: flex;
+    width: 100%;
+    gap: 5px;
+    margin-top: 12px;
+}
+
+.slider-wrapper input {
+    width: 25%;
+}
+
+.slider-wrapper input[type="range"] {
+    width: 75%;
+}
+
+.slider-wrapper button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    height: 30px;
+    width: 30px;
+    border: none;
+    background-color: transparent;
+}
+
+.slider-wrapper img {
+    height: 100%;
+    width: 100%;
+}
+
+#sliderButton {
+    margin: 10px 5% -10px 5%;
+    height: 40px;
+    flex-shrink: 0;
+    width: 90%;
+    background-color: #0075FF;
+    color: white;
+    top: 10px;
+    z-index: 1;
+    position: sticky;
+}
+
+#sidebar > button.disabled {
+    background-color: #002F66;
+    color: #666666;
+    cursor: default;
 }
 
 #webGLCanvas {
@@ -33,6 +107,10 @@ body {
     flex-basis: 0;
     flex-grow: 1;
     flex-shrink: 1;
+}
+
+.info-wrapper {
+    padding: 0 10px 0 10px;
 }
 
 .button-wrapper {
@@ -56,7 +134,7 @@ button {
 
 .mq-inner {
     height: fit-content;
-    width: 100%;
+    width: fit-content;
     max-width: 75vw;
     display: flex;
     gap: 2.5px;
@@ -75,7 +153,10 @@ button {
 }
 
 .mq-inner button {
-    height: 100%;
+    height: 70px;
+    width: 70px;
+    flex-grow: 0;
+    flex-shrink: 0;
 }
 
 .button-wrapper img {
@@ -99,6 +180,7 @@ button {
     justify-items: center;
     flex-grow: 0;
     flex-shrink: 0;
+    padding: 0 10px 0 10px;
 } 
 
 .input-correction {
@@ -203,7 +285,7 @@ input[disabled] {
     position: absolute;
     align-items: center;
     justify-content: space-between;
-    left: 50%;
+    left: -10px;
     top: -40px;
     height: 32px;
     padding: 5px;
@@ -231,6 +313,12 @@ input[disabled] {
 :root {
     touch-action: pan-x pan-y;
     height: 100%;
+}
+
+@media (max-width: 1000px) {
+    .main {
+        width: 100%;
+    }
 }
 
 @media (max-width: 800px) {

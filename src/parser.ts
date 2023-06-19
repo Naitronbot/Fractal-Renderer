@@ -1,37 +1,28 @@
-const TOKEN_REGEX = [
-    /^(\d+\.?\d*|\d*\.?\d+|\\pi|e|i)/,
-    /^([zc])/,
-    /^([\+\-\^]|^\\cdot)/,
-    /^(\_)/,
-    /^\\left(\(|\[|\\\{)/,
-    /^\\right(\)|\]|\\\})/,
-    /^\\left(\|)/,
-    /^\\right(\|)/,
-    /^({)/,
-    /^(})/,
-    /^\\operatorname\{([a-zA-Z]+)\}/,
-    /^\\([a-zA-Z]+)/
+// Tokenizer regex, links regular expressions to their corresponding token names
+const TOKENS: [RegExp,string][] = [
+    [/^(\d+\.?\d*|\d*\.?\d+|\\pi)/, "number"],
+    [/^([a-zA-Z])/, "letter"],
+    [/^([\+\-\^]|^\\cdot)/, "operator"],
+    [/^(\_)/, "subscript"],
+    [/^\\left(\(|\[|\\\{)/, "openingGroup"],
+    [/^\\right(\)|\]|\\\})/, "closingGroup"],
+    [/^\\left(\|)/, "openingAbs"],
+    [/^\\right(\|)/, "closingAbs"],
+    [/^({)/, "openingLatexGroup"],
+    [/^(})/, "closingLatexGroup"],
+    [/^\\operatorname\{([a-zA-Z]+)\}/, "special"],
+    [/^\\([a-zA-Z]+)/, "special"]
 ];
-const TOKEN_NAMES = [
-    "number",
-    "variable",
-    "operator",
-    "subscript",
-    "openingGroup",
-    "closingGroup",
-    "openingAbs",
-    "closingAbs",
-    "openingLatexGroup",
-    "closingLatexGroup",
-    "special",
-    "special"
-];
+
+// Gives how tightly binding operators should be
 const PRECEDENCE: {[op: string]: number} = {
     "+": 10,
     "-": 10,
     "*": 20,
     "^": 30
 };
+
+// Gives closing bracket token for each opening bracket
 const BRACKETS: {[open: string]: string} = {
     "(": ")",
     "[": "]",
@@ -59,6 +50,7 @@ class Token {
     }
 }
 
+// Input TokenStream, procedurally tokenizes input string as needed
 class TokenStream {
     input: string;
     current: Token | null;
@@ -68,20 +60,24 @@ class TokenStream {
         this.current = null;
     }
 
+    // Advances pointer and returns next token
     next() {
         let next = this.current;
         this.current = null;
         return next || this.read();
     }
 
+    // Returns next token without advancing pointer
     peek() {
         return this.current || (this.current = this.read());
     }
 
+    // Retuns whether or not there is another token
     hasNext() {
         return this.peek() != null;
     }
     
+    // Read and return a single token
     private read(): Token | null {
         this.input = this.input.replace(/^(?:\\? )+/, "");
 
@@ -89,14 +85,14 @@ class TokenStream {
             return null;
         }
 
-        for (let i in TOKEN_REGEX) {
-            let matchIndex = TOKEN_REGEX[i].exec(this.input);
+        for (let key of TOKENS) {
+            let matchIndex = key[0].exec(this.input);
             if (matchIndex !== null) {
                 this.input = this.input.substring(matchIndex[0].length);
                 if (matchIndex[1] === "\\cdot") {
-                    return new Token(TOKEN_NAMES[i], "*");
+                    return new Token(key[1], "*");
                 }
-                return new Token(TOKEN_NAMES[i], matchIndex[1]);
+                return new Token(key[1], matchIndex[1]);
             }
         }
 
@@ -115,8 +111,10 @@ class NumberNode {
 
 class VariableNode {
     value: string;
-    constructor(value: string) {
+    userDefined: boolean;
+    constructor(value: string, user: boolean) {
         this.value = value;
+        this.userDefined = user;
     }
 }
 
@@ -140,238 +138,327 @@ class OneOperatorNode {
     } 
 }
 
-const ERROR_BOX = document.getElementById("errorBox") as HTMLElement;
-function parse() {
-    let field = viewport.settings.equation;
-    if (field === "") {
-        ERROR_BOX.innerHTML = "";
-        ERROR_BOX.style.display = "none";
-        return;
-    }
-    let stream = new TokenStream(field);
-    try {
-        let ast = recursiveParse(stream, 0);
-        if (ast instanceof ParseError) {
-            throw ast;
-        }
-        ERROR_BOX.innerHTML = "";
-        ERROR_BOX.style.display = "none";
-        return ast;
-    } catch(error) {
-        if(!(error instanceof ParseError)) { throw error; }
-        ERROR_BOX.innerHTML = error.name + ": " + error.message;
-        ERROR_BOX.style.display = "";
-    }
-}
+// Parses the current expression, and stores info related to it
+class Parser {
+    static current: Parser = new Parser(settings.equation);
 
-function recursiveParse(stream: TokenStream, precedence: number): ParseNode | ParseError {
-    let left = stream.next();
+    private equation: string; // Equation to parse, use settings.equation for external equation
+    ast: ParseNode; // Parsed AST of current equation
+    userVars: Set<string>; // Set of user defined variables
+    success: boolean; // If the parser encountered no syntax errors
+    needsVars: boolean; // If there are variables in the current equation that the user has not defined
     
-    // Check for end of input
-    if (left === null) {
-        throw new ParseError("Parsing Error", "Unexpected end of input");
+    constructor(equation: string) {
+        settings.equation = equation;
+        this.equation = equation;
+        this.userVars = new Set();
+        this.ast = new NumberNode("0");
+        this.success = false;
+        this.needsVars = false;
     }
 
-    // Get the type of the left node
-    let leftNode: ParseNode | ParseError;
-    if (left.type === "number") {
-        leftNode = new NumberNode(left.value);
-    } else if (left.type === "variable") {
-        leftNode = new VariableNode(left.value);
-    } else if (left.value === "-") {
-        let next = recursiveParse(stream, 15);
-        if (next instanceof ParseError) {
-            throw next;
-        }
-        leftNode = new TwoOperatorNode(new NumberNode("0"), "-", next);
-    } else if (left.type === "openingGroup") {
-        leftNode = parseGroup(stream, left);
-    } else if (left.type === "closingGroup") {
-        throw new ParseError("Parsing Error", "Brackets cannot be empty" );
-    } else if (left.type === "openingLatexGroup") {
-        leftNode = parseLatexGroup(stream, false);
-    } else if (left.type === "closingLatexGroup") {
-        return new ParseError("Parsing Error", "Latex groups cannot be empty");
-    } else if (left.type === "openingAbs") {
-        let inner = parseGroup(stream, left);
-        if (inner instanceof ParseError) {
-            throw inner;
-        }
-        leftNode = new OneOperatorNode("abs", inner);
-    } else if (left.type === "closingAbs") {
-        return new ParseError("Parsing Error", "Absolute values cannot be empty");
-    } else if (left.value === "frac" && left.type === "special") {
-        let numerator = parseLatexGroup(stream, true);
-        if (numerator instanceof ParseError) {
-            throw new ParseError("Parsing Error", "Numerator of a fraction cannot be empty");
-        }
-        let denominator = parseLatexGroup(stream, true);
-        if (denominator instanceof ParseError) {
-            throw new ParseError("Parsing Error", "Denominator of a fraction cannot be empty");
-        }
-        leftNode = new TwoOperatorNode(numerator, "/", denominator);
-    } else if (left.value === "log" && left.type === "special") {
-        let next = stream.peek();
-        let base: ParseNode = new NumberNode("10");
-        if (next === null) {
-            throw new ParseError("Parsing Error", `Function \'log\' must have an argument`);
-        }
-        if (next.type === "subscript") {
-            stream.next();
-            let subscript = parseLatexGroup(stream, true);
-            if (subscript instanceof ParseError) {
-                throw new ParseError("Parsing Error", "Subscripts cannot be empty");
-            }
-            base = subscript;
+    parse() {
+        // TODO: ABSTRACT ERROR BOX MANIPULATION
+
+        // Handle case when input is empty
+        if (this.equation === "") {
+            ERROR_BOX.innerHTML = "";
+            ERROR_BOX.style.display = "none";
+            return true;
         }
 
-        let inner = parseFunction(stream, left);
-        if (inner instanceof ParseError) {
-            throw inner;
+        let stream = new TokenStream(this.equation);
+        try {
+            let ast = this.recursiveParse(stream, 0);
+
+            if (ast instanceof ParseError) {
+                throw ast;
+            }
+
+            this.ast = ast;
+            ERROR_BOX.innerHTML = "";
+            ERROR_BOX.style.display = "none";
+            this.success = true;
+            this.manageVariables();
+            Parser.current = this;
+            return true;
+        } catch(error) {
+            if(!(error instanceof ParseError)) { throw error; }
+            ERROR_BOX.innerHTML = error.name + ": " + error.message;
+            ERROR_BOX.style.display = "";
+            this.manageVariables();
+            Parser.current = this;
+            return false;
         }
+    }
+
+    // Handles displaying of variable errors, variable button UI, and determines if there are undefined variables
+    manageVariables() {
+        if (!this.success) {
+            SLIDER_BUTTON.classList.add("disabled");
+            return;
+        }
+        for (let val of this.userVars) {
+            if (!sidebarVars.has(val)) {
+                ERROR_BOX.innerHTML = `Variable Error: ${val} is not defined`;
+                ERROR_BOX.style.display = "";
+                SLIDER_BUTTON.classList.remove("disabled");
+                this.needsVars = true;
+                return;
+            }
+        }
+        SLIDER_BUTTON.classList.add("disabled");
+        this.needsVars = false;
+    }
+
+    recursiveParse(stream: TokenStream, precedence: number): ParseNode | ParseError {
+        let left = stream.next();
         
-        leftNode = new TwoOperatorNode(inner, "log", base);
-    } else if (left.type === "special") {
-        let inner = parseFunction(stream, left);
-        if (inner instanceof ParseError) {
-            throw inner;
-        }
-        leftNode = new OneOperatorNode(left.value, inner);
-    } else if (left.type === "operator") {
-        throw new ParseError("Parsing Error", `Unexpected operator: ${left.value}`);
-    } else if (left.type === "subscript") {
-        throw new ParseError("Parsing Error", `Unexpected subscript`);
-    } else {
-        throw new ParseError("Parsing Error", "Unknown token " + left.value);
-    }
-
-    if (leftNode instanceof ParseError) {
-        return leftNode;
-    }
-
-    while (true) {
-        let next = stream.peek();
-
         // Check for end of input
-        if (next === null) {
-            return leftNode;
+        if (left === null) {
+            throw new ParseError("Parsing Error", "Unexpected end of input");
         }
-        if (next.type === "closingGroup" || next.type === "closingLatexGroup" || next.type === "closingAbs") {
-            return leftNode;
-        }
-
-        if (next.type === "operator") {
-            if (getPrecedence(next.value) <= precedence) {
-                return leftNode;
+    
+        // Get the type of the left node
+        let leftNode: ParseNode | ParseError;
+        if (left.type === "number") {
+            leftNode = new NumberNode(left.value);
+        } else if (left.type === "letter") {
+            let next = stream.peek();
+            if (next !== null && next.type === "subscript") {
+                stream.next();
+                let subOpening = stream.next(); 
+                if (subOpening === null || subOpening.type !== "openingLatexGroup") {
+                    throw new ParseError("Parsing Error", "Malformed Latex");
+                }
+                let subscript = "";
+                let subNext;
+                while (true) {
+                    subNext = stream.next()
+                    if (subNext === null) {
+                        throw new ParseError("Parsing Error", "Malformed Latex");
+                    }
+                    if (subNext.type === "closingLatexGroup") {
+                        break;
+                    }
+                    if (subNext.type !== "letter" && subNext.type !== "number") {
+                        throw new ParseError("Parsing Error", "Unexpected value in variable subscript");
+                    }
+                    subscript += subNext.value;
+                }
+                if (subscript === "") {
+                    throw new ParseError("Parsing Error", "Subscripts cannot be empty");
+                }
+                if (subscript.includes("\\")) {
+                    throw new ParseError("Parsing Error", "Invalid character in variable subscript");
+                }
+                leftNode = new VariableNode(left.value + "_" + subscript, true);
+                this.userVars.add(leftNode.value);
+            } else if (/^[ei]$/.test(left.value)) {
+                leftNode = new NumberNode(left.value);
+            } else if (/^[zc]$/.test(left.value)) {
+                leftNode = new VariableNode(left.value, false);
+            } else {
+                leftNode = new VariableNode(left.value, true);
+                this.userVars.add(leftNode.value);
             }
-            stream.next();
-            let rightNode = recursiveParse(stream, getPrecedence(next.value));
-            if (rightNode instanceof ParseError) {
-                throw new ParseError("Parsing Error", "Exponents cannot be empty");
+        } else if (left.value === "-") {
+            let next = this.recursiveParse(stream, 15);
+            if (next instanceof ParseError) {
+                throw next;
             }
-
-            leftNode = new TwoOperatorNode(leftNode, next.value, rightNode);
+            leftNode = new TwoOperatorNode(new NumberNode("0"), "-", next);
+        } else if (left.type === "openingGroup") {
+            leftNode = this.parseGroup(stream, left);
+        } else if (left.type === "closingGroup") {
+            throw new ParseError("Parsing Error", "Brackets cannot be empty" );
+        } else if (left.type === "openingLatexGroup") {
+            leftNode = this.parseLatexGroup(stream, false);
+        } else if (left.type === "closingLatexGroup") {
+            return new ParseError("Parsing Error", "Latex groups cannot be empty");
+        } else if (left.type === "openingAbs") {
+            let inner = this.parseGroup(stream, left);
+            if (inner instanceof ParseError) {
+                throw inner;
+            }
+            leftNode = new OneOperatorNode("abs", inner);
+        } else if (left.type === "closingAbs") {
+            return new ParseError("Parsing Error", "Absolute values cannot be empty");
+        } else if (left.value === "frac" && left.type === "special") {
+            let numerator = this.parseLatexGroup(stream, true);
+            if (numerator instanceof ParseError) {
+                throw new ParseError("Parsing Error", "Numerator of a fraction cannot be empty");
+            }
+            let denominator = this.parseLatexGroup(stream, true);
+            if (denominator instanceof ParseError) {
+                throw new ParseError("Parsing Error", "Denominator of a fraction cannot be empty");
+            }
+            leftNode = new TwoOperatorNode(numerator, "/", denominator);
+        } else if (left.value === "log" && left.type === "special") {
+            let next = stream.peek();
+            let base: ParseNode = new NumberNode("10");
+            if (next === null) {
+                throw new ParseError("Parsing Error", `Function \'log\' must have an argument`);
+            }
+            if (next.type === "subscript") {
+                stream.next();
+                let subscript = this.parseLatexGroup(stream, true);
+                if (subscript instanceof ParseError) {
+                    throw new ParseError("Parsing Error", "Subscripts cannot be empty");
+                }
+                base = subscript;
+            }
+    
+            let inner = this.parseFunction(stream, left);
+            if (inner instanceof ParseError) {
+                throw inner;
+            }
+            
+            leftNode = new TwoOperatorNode(inner, "log", base);
+        } else if (left.type === "special") {
+            let inner = this.parseFunction(stream, left);
+            if (inner instanceof ParseError) {
+                throw inner;
+            }
+            leftNode = new OneOperatorNode(left.value, inner);
+        } else if (left.type === "operator") {
+            throw new ParseError("Parsing Error", `Unexpected operator: ${left.value}`);
+        } else if (left.type === "subscript") {
+            throw new ParseError("Parsing Error", `Unexpected subscript`);
         } else {
-            if (getPrecedence("*") <= precedence) {
+            throw new ParseError("Parsing Error", "Unknown token " + left.value);
+        }
+    
+        if (leftNode instanceof ParseError) {
+            return leftNode;
+        }
+    
+        while (true) {
+            let next = stream.peek();
+    
+            // Check for end of input
+            if (next === null) {
                 return leftNode;
             }
-            let rightNode = recursiveParse(stream, getPrecedence("*"));
-            if (rightNode instanceof ParseError) {
-                throw rightNode;
+            if (next.type === "closingGroup" || next.type === "closingLatexGroup" || next.type === "closingAbs") {
+                return leftNode;
             }
-
-            leftNode = new TwoOperatorNode(leftNode, "*", rightNode);
+    
+            if (next.type === "operator") {
+                if (PRECEDENCE[next.value] <= precedence) {
+                    return leftNode;
+                }
+                stream.next();
+                let rightNode = this.recursiveParse(stream, PRECEDENCE[next.value]);
+                if (rightNode instanceof ParseError) {
+                    throw new ParseError("Parsing Error", "Exponents cannot be empty");
+                }
+    
+                leftNode = new TwoOperatorNode(leftNode, next.value, rightNode);
+            } else {
+                if (PRECEDENCE["*"] <= precedence) {
+                    return leftNode;
+                }
+                let rightNode = this.recursiveParse(stream, PRECEDENCE["*"]);
+                if (rightNode instanceof ParseError) {
+                    throw rightNode;
+                }
+    
+                leftNode = new TwoOperatorNode(leftNode, "*", rightNode);
+            }
         }
     }
-}
 
-function parseGroup(stream: TokenStream, opening: Token | null): ParseNode | ParseError {
-    if (opening === null) {
-        opening = stream.next();
+    // Parse a math group (parenthesis, brackets, or curly brackets)
+    parseGroup(stream: TokenStream, opening: Token | null): ParseNode | ParseError {
         if (opening === null) {
-            throw new ParseError("Parsing Error", "Unexpected end of input");
+            opening = stream.next();
+            if (opening === null) {
+                throw new ParseError("Parsing Error", "Unexpected end of input");
+            }
+            if (opening.type != "openingGroup" && opening.type != "openingAbs") {
+                throw new ParseError("Parsing Error", "Malformed Latex");
+            }
         }
-        if (opening.type != "openingGroup" && opening.type != "openingAbs") {
-            throw new ParseError("Parsing Error", "Malformed Latex");
-        }
-    }
-
-    let inner = recursiveParse(stream, 0);
-    if (inner === null) {
-        throw new ParseError("Parsing Error", `Opening bracket ${opening.value} needs to be closed`);
-    }
-    if (inner instanceof ParseError) {
-        return inner;
-    }
-
-    let closing = stream.next();
-    if (closing === null) {
-        throw new ParseError("Parsing Error", `Opening bracket ${opening.value} needs to be closed`);
-    }
-    if (closing.value !== BRACKETS[opening.value]) {
-        throw new ParseError("Parsing Error", `Mismatched bracket ${opening.value} and ${closing.value}`);
-    }
-    return inner;
-}
-
-function parseLatexGroup(stream: TokenStream, checkOpening: boolean): ParseNode | ParseError {
-    if (checkOpening) {
-        let opening = stream.next();
-        if (opening === null) {
-            throw new ParseError("Parsing Error", "Unexpected end of input");
-        }
-        if (opening.value !== "{") {
-            throw new ParseError("Parsing Error", "Malformed Latex");
-        }
-    }
-
-    let inner = recursiveParse(stream, 0);
-    if (inner === null) {
-        throw new ParseError("Parsing Error", `Unexpected end of input`);
-    }
-    if (inner instanceof ParseError) {
-        return inner;
-    }
-
-    let closing = stream.next();
-    if (closing === null) {
-        throw new ParseError("Parsing Error", `Unexpected end of input`);
-    }
-    if (closing.value !== "}") {
-        throw new ParseError("Parsing Error", `Malformed Latex`);
-    }
-
-    return inner;
-}
-
-function parseFunction(stream: TokenStream, left: Token): ParseNode | ParseError {
-    let next = stream.peek();
-    if (next === null) {
-        throw new ParseError("Parsing Error", `Function \'${left.value}\' must have an argument`);
-    }
-    let inner: ParseNode | ParseError;
-    if (next.type === "openingGroup") {
-        inner = parseGroup(stream, null);
-        if (inner instanceof ParseError) {
-            throw inner;
-        }
-    } else if (next.type === "openingLatexGroup") {
-        inner = parseLatexGroup(stream, true);
-        if (inner instanceof ParseError) {
-            throw new ParseError("Parsing Error", `Square roots cannot be empty`);
-        }
-    } else {
-        inner = recursiveParse(stream, 15);
+    
+        let inner = this.recursiveParse(stream, 0);
         if (inner === null) {
+            throw new ParseError("Parsing Error", `Opening bracket ${opening.value} needs to be closed`);
+        }
+        if (inner instanceof ParseError) {
+            return inner;
+        }
+    
+        let closing = stream.next();
+        if (closing === null) {
+            throw new ParseError("Parsing Error", `Opening bracket ${opening.value} needs to be closed`);
+        }
+        if (closing.value !== BRACKETS[opening.value]) {
+            throw new ParseError("Parsing Error", `Mismatched bracket ${opening.value} and ${closing.value}`);
+        }
+        return inner;
+    }
+
+    // Parse a latex group (un-escaped curly brackets)
+    parseLatexGroup(stream: TokenStream, checkOpening: boolean): ParseNode | ParseError {
+        if (checkOpening) {
+            let opening = stream.next();
+            if (opening === null) {
+                throw new ParseError("Parsing Error", "Unexpected end of input");
+            }
+            if (opening.value !== "{") {
+                throw new ParseError("Parsing Error", "Malformed Latex");
+            }
+        }
+    
+        let inner = this.recursiveParse(stream, 0);
+        if (inner === null) {
+            throw new ParseError("Parsing Error", `Unexpected end of input`);
+        }
+        if (inner instanceof ParseError) {
+            return inner;
+        }
+    
+        let closing = stream.next();
+        if (closing === null) {
+            throw new ParseError("Parsing Error", `Unexpected end of input`);
+        }
+        if (closing.value !== "}") {
+            throw new ParseError("Parsing Error", `Malformed Latex`);
+        }
+    
+        return inner;
+    }
+
+    // Parse a function: \name()
+    parseFunction(stream: TokenStream, left: Token): ParseNode | ParseError {
+        if (left.value === "backslash") {
+            throw new ParseError("Parsing Error", "Unexpected backslash");
+        }
+        let next = stream.peek();
+        if (next === null) {
             throw new ParseError("Parsing Error", `Function \'${left.value}\' must have an argument`);
         }
-        if (inner instanceof ParseError) {
-            throw inner;
+        let inner: ParseNode | ParseError;
+        if (next.type === "openingGroup") {
+            inner = this.parseGroup(stream, null);
+            if (inner instanceof ParseError) {
+                throw inner;
+            }
+        } else if (next.type === "openingLatexGroup") {
+            inner = this.parseLatexGroup(stream, true);
+            if (inner instanceof ParseError) {
+                throw new ParseError("Parsing Error", `Square roots cannot be empty`);
+            }
+        } else {
+            inner = this.recursiveParse(stream, 15);
+            if (inner === null) {
+                throw new ParseError("Parsing Error", `Function \'${left.value}\' must have an argument`);
+            }
+            if (inner instanceof ParseError) {
+                throw inner;
+            }
         }
+        return inner;
     }
-    return inner;
-}
-
-function getPrecedence(op: string): number {
-    return PRECEDENCE[op];
 }

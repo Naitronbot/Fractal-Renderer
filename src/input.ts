@@ -13,30 +13,29 @@ const MQ_FIELD = MQ.MathField(MQ_CONTAINER, {
         edit: fieldEdit
     }
 });
+let hasSidebar = true;
 
-MQ_FIELD.latex(viewport.settings.equation);
+MQ_FIELD.latex(settings.equation);
 MQ_CONTAINER?.addEventListener("keypress", e => {
     if (e.key === "Enter") {
-        setup(true);
+        updateSidebar();
     }
 });
 
 function fieldEdit() {
-    viewport.settings.equation = MQ_FIELD.latex();
     fixGrid();
-    let ast = parse();
-    if (ast) {
-        currentAST = ast;
+    let parsed = new Parser(MQ_FIELD.latex()).parse();
+    if (parsed) {
         setup(false);
     }
 }
 
 function logLatex() {
-    console.log(viewport.settings.equation);
+    console.log(settings.equation);
 }
 
 function logTokens() {
-    let tokenStream = new TokenStream(viewport.settings.equation);
+    let tokenStream = new TokenStream(settings.equation);
     let tokens = [];
     while (tokenStream.hasNext()) {
         let next = tokenStream.next();
@@ -45,20 +44,34 @@ function logTokens() {
     console.log(tokens);
 }
 
+function logAST() {
+    console.log(Parser.current.ast);
+}
+
 function logGLSL() {
-    console.log(recursiveDecompose(parse()!));
+    console.log(recursiveDecompose(Parser.current.ast));
 }
 
 function logShader() {
-    console.log(getFragment(parse()!, viewport.settings));
+    let parser = new Parser(settings.equation);
+    let parsed = parser.parse()!;
+    console.log(getFragment());
 }
 
 function fixGrid() {
+    if (window.innerWidth >= 1000 && !hasSidebar) {
+        document.body.prepend(SIDEBAR);
+        hasSidebar = true;
+    } else if (window.innerWidth <= 1000 && hasSidebar) {
+        SIDEBAR.remove();
+        hasSidebar = false;
+    }
+
     if (window.innerWidth <= 800) {
         return;
     }
     let totalWidth = INPUT_ELEMENTS[0].clientWidth + INPUT_ELEMENTS[1].clientWidth + INPUT_ELEMENTS[2].clientWidth;
-    if (totalWidth > canvas.clientWidth) {
+    if (totalWidth + 20 > canvas.clientWidth) {
         INPUT_GRID?.classList.add("input-correction");
         CANVAS_WRAPPER?.classList.add("input-correction");
     } else {

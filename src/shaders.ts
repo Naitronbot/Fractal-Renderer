@@ -35,13 +35,16 @@ function recursiveDecompose(node: ParseNode): string {
         return `c${node.operator}(${recursiveDecompose(node.value)})`;
     }
     if (node instanceof VariableNode) {
+        if (node.userDefined) {
+            return "u_" + node.value;   
+        }
         return node.value;
     }
     throw new Error("WebGL Error: Unknown node type");
 }
 
-function getFragment(ast: ParseNode, settings: any): string {
-    let functionString = recursiveDecompose(ast);
+function getFragment(): string {
+    let functionString = recursiveDecompose(Parser.current.ast);
     return `#version 300 es
     precision highp float;
     uniform int u_iterations;
@@ -57,6 +60,14 @@ function getFragment(ast: ParseNode, settings: any): string {
     uniform vec3 u_transform;
     uniform sampler2D u_texture;
     uniform vec2 u_offset;
+
+    ${(() => {
+        let unif = "";
+        for (let uni of Parser.current.userVars.values()) {
+            unif += `uniform vec2 u_${uni};\n`;
+        }
+        return unif;
+    })()}
     
     in vec2 uv;
     out vec4 fragColor;
@@ -111,11 +122,19 @@ function getFragment(ast: ParseNode, settings: any): string {
     }
 
     vec2 cpow2(vec2 z, float n) {
+        if (z.x == 0.0) {
+            float angle = (z.y >= 0.0) ? pi/2.0 : -pi/2.0;
+            return pow(length(z),n)*vec2(cos(angle),sin(angle));
+        }
         float angle = n*atan(z.y,z.x);
         return pow(length(z),n)*vec2(cos(angle),sin(angle));
     }
 
     vec2 cln(vec2 z) {
+        if (z.x == 0.0) {
+            float angle = (z.y >= 0.0) ? pi/2.0 : -pi/2.0;
+            return vec2(log(length(z)), angle);
+        }
         return vec2(log(length(z)),atan(z.y,z.x));
     }
 
@@ -128,6 +147,10 @@ function getFragment(ast: ParseNode, settings: any): string {
     }
 
     vec2 carg(vec2 z) {
+        if (z.x == 0.0) {
+            float angle = (z.y >= 0.0) ? pi/2.0 : -pi/2.0;
+            return vec2(angle,0);
+        }
         return vec2(atan(z.y,z.x),0);
     }
 
@@ -151,6 +174,13 @@ function getFragment(ast: ParseNode, settings: any): string {
     }
 
     vec2 cpow(vec2 z1, vec2 z2) {
+        if (abs(z2.y) < 1e-07) {
+            return cpow2(z1,z2.x);
+        }
+        if (abs(z1.y) < 1e-07) {
+            return cpow1(z1.x,z2);
+        }
+
         if (z1 == vec2(0.0,0.0)) {
             if (z2.x == 0.0) {
                 return vec2(1.0,0.0);
@@ -165,6 +195,10 @@ function getFragment(ast: ParseNode, settings: any): string {
     }
 
     vec2 csqrt(vec2 z) {
+        if (z.x == 0.0) {
+            float angle = (z.y >= 0.0) ? pi/2.0 : -pi/2.0;
+            return pow(z.x*z.x+z.y*z.y,0.25)*vec2(cos(angle),sin(angle));
+        }
         float angle = 0.5*atan(z.y,z.x);
         return pow(z.x*z.x+z.y*z.y,0.25)*vec2(cos(angle),sin(angle));
     }
@@ -327,7 +361,7 @@ function getFragment(ast: ParseNode, settings: any): string {
         return cGamma2(z);
     }
 
-    vec2 f(vec2 z, vec2 c) {
+    vec2 func(vec2 z, vec2 c) {
         return ${functionString};
     }
     
@@ -379,6 +413,10 @@ function getFragment(ast: ParseNode, settings: any): string {
     }
 
     vec3 domain(vec2 z) {
+        if (isnan(z.x) || isnan(z.y)) {
+            return vec3(0.0);
+        }
+
         float shift = u_hueShift;
         float mag = length(z);
         float angle;
@@ -418,7 +456,7 @@ function getFragment(ast: ParseNode, settings: any): string {
         float dist = 0.0;
         if (u_color == 2) {
             for (int i = 0; i < u_iterations; i++) {
-                z = f(z, c);
+                z = func(z, c);
             }
         } else if (u_color == 10) {
             vec2 lastIter;
@@ -428,16 +466,28 @@ function getFragment(ast: ParseNode, settings: any): string {
                     break;
                 }
                 lastIter = z;
-                z = f(z, c);
+                z = func(z, c);
+                if (isnan(z.x) || isnan(z.y)) {
+                    iter = float(i);
+                    z = lastIter;
+                    break;
+                }
                 dist += length(z-lastIter);
             }
         } else {
+            vec2 prevZ;
             for (int i = 0; i < u_iterations; i++) {
                 if (z.x*z.x + z.y*z.y > u_breakout*u_breakout) {
                     iter = float(i);
                     break;
                 }
-                z = f(z, c);
+                prevZ = z;
+                z = func(z, c);
+                if (isnan(z.x) || isnan(z.y)) {
+                    iter = float(i);
+                    z = prevZ;
+                    break;
+                }
             }
         }
     
@@ -470,6 +520,7 @@ function getFragment(ast: ParseNode, settings: any): string {
         }
 
         c = c/u_transform.z + u_transform.xy;
+
         if (u_samples == 1) {
             fragColor = mainLoop(c);
         } else {
