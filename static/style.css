@@ -13,6 +13,10 @@ body {
     box-sizing: border-box;
 }
 
+p,input,label,button {
+    font-family: 'Roboto';
+}
+
 .main {
     height: 100%;
     height: -webkit-fill-available;
@@ -78,15 +82,16 @@ body {
 }
 
 #sliderButton {
-    margin: 10px 5% -10px 5%;
+    margin: 10px 25% -10px 25%;
     height: 40px;
     flex-shrink: 0;
-    width: 90%;
+    width: 50%;
     background-color: #0075FF;
     color: white;
     top: 10px;
     z-index: 1;
     position: sticky;
+    font-size: 20px;
 }
 
 #sidebar > button.disabled {
