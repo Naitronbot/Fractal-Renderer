@@ -177,9 +177,9 @@ function getFragment(): string {
         if (abs(z2.y) < 1e-07) {
             return cpow2(z1,z2.x);
         }
-        if (abs(z1.y) < 1e-07) {
-            return cpow1(z1.x,z2);
-        }
+        //if (abs(z1.y) < 1e-07) {
+        //    return cpow1(z1.x,z2);
+        //}
 
         if (z1 == vec2(0.0,0.0)) {
             if (z2.x == 0.0) {
