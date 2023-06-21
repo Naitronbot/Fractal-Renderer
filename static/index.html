@@ -23,20 +23,21 @@
     <div id="sidebar">
         <button class="disabled" id="sliderButton" onclick="updateSidebar()">Add Sliders</button>
     </div>
-    <div class="main">
+    <div class="main" id="main">
         <div id="canvasWrapper" class="canvas-wrapper">
             <canvas id="webGLCanvas" width="300px" height="300px"></canvas>
         </div>
         <div class="button-wrapper info-wrapper">
             <p id="coordDisplay"></p>
             <div class="button-wrapper">
-                <button title="Reset Offset/Zoom" id="resetButton" onclick="resetView()"><img src="refresh.svg"></button>
-                <button title="Download Screenshot" id="downloadButton" onclick="settings.antiAlias ? (settings.screenshot = true) : (downloadCanvas())"><img src="download.svg"></button>
+                <button title="View Sliders" style="display: none;" id="slidersToggle" onclick="toggleSliders()"><img src="assets/sliders.svg"></button>
+                <button title="Reset Offset/Zoom" id="resetButton" onclick="resetView()"><img src="assets/refresh.svg"></button>
+                <button title="Download Screenshot" id="downloadButton" onclick="settings.antiAlias ? (settings.screenshot = true) : (downloadCanvas())"><img src="assets/download.svg"></button>
                 <div class="share-wrapper button-wrapper">
-                    <div id="sharePopup" style="display: none;"><input id="shareInput" readonly="readonly"><button onclick="SHARE_POPUP.style.display = 'none'"><img src="close.svg"></button></div>
-                    <button title="Get Fractal URL" id="urlButton" onclick="shareURL()"><img src="share.svg"></button>
+                    <div id="sharePopup" style="display: none;"><input id="shareInput" readonly="readonly"><button onclick="SHARE_POPUP.style.display = 'none'"><img src="assets/close.svg"></button></div>
+                    <button title="Get Fractal URL" id="urlButton" onclick="shareURL()"><img src="assets/share.svg"></button>
                 </div>
-                <button title="Fullscreen" id="fullscreenButton" onclick="fullscreen()"><img src="fullscreen.svg"></button>
+                <button title="Fullscreen" id="fullscreenButton" onclick="fullscreen()"><img src="assets/fullscreen.svg"></button>
             </div>
         </div>
         <div id="inputGrid" class="input-wrapper">
@@ -53,7 +54,7 @@
             <div class="mq-wrapper">
                 <div class="mq-inner">
                     <div id="mqInput"></div>
-                    <button id="recompButton" onclick="setup(true)" style="display: none;"><img src="done.svg"></button>
+                    <button id="recompButton" onclick="setup(true)" style="display: none;"><img src="assets/done.svg"></button>
                 </div>
                 <div>
                     <label title="Make rendering the fractal happen on button press, instead of whenever the equation is edited" id="recompLabel" for="recompToggle">Manual Recompile</label>

@@ -1,9 +1,10 @@
 declare const MathQuill: any;
+const MAIN = document.getElementById("main") as HTMLElement;
 const MQ = MathQuill.getInterface(2);
-const MQ_CONTAINER = document.getElementById("mqInput");
-const INPUT_GRID = document.getElementById("inputGrid");
+const MQ_CONTAINER = document.getElementById("mqInput") as HTMLElement;
+const INPUT_GRID = document.getElementById("inputGrid") as HTMLElement;
 const CANVAS_WRAPPER = document.getElementById("canvasWrapper")!;
-const INPUT_ELEMENTS = INPUT_GRID?.children as HTMLCollection;
+const INPUT_ELEMENTS = INPUT_GRID.children as HTMLCollection;
 const MQ_FIELD = MQ.MathField(MQ_CONTAINER, {
     restrictMismatchedBrackets: true,
     autoCommands: 'pi sqrt Gamma',
@@ -16,7 +17,7 @@ const MQ_FIELD = MQ.MathField(MQ_CONTAINER, {
 let hasSidebar = true;
 
 MQ_FIELD.latex(settings.equation);
-MQ_CONTAINER?.addEventListener("keypress", e => {
+MQ_CONTAINER.addEventListener("keypress", e => {
     if (e.key === "Enter") {
         updateSidebar();
     }
@@ -60,10 +61,17 @@ function logShader() {
 
 function fixGrid() {
     if (window.innerWidth >= 1000 && !hasSidebar) {
+        SIDEBAR.remove();
         document.body.prepend(SIDEBAR);
+        SIDEBAR.classList.remove("hidden");
+        INPUT_GRID.classList.remove("hidden");
+        SLIDERS_TOGGLE.style.display = "none";
         hasSidebar = true;
     } else if (window.innerWidth <= 1000 && hasSidebar) {
         SIDEBAR.remove();
+        MAIN.append(SIDEBAR);
+        SIDEBAR.classList.add("hidden");
+        SLIDERS_TOGGLE.style.display = "";
         hasSidebar = false;
     }
 

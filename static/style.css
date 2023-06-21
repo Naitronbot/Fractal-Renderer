@@ -310,6 +310,10 @@ input[disabled] {
     grid-column: 2/4;
 }
 
+.hidden {
+    display: none !important;
+}
+
 :root {
     touch-action: pan-x pan-y;
     height: 100%;
@@ -318,6 +322,16 @@ input[disabled] {
 @media (max-width: 1000px) {
     .main {
         width: 100%;
+    }
+
+    #sidebar {
+        width: 100%;
+        height: 200px;
+        margin: 10px 0 10px 0;
+    }
+
+    .input-wrapper {
+        margin: 10px 0 10px 0;
     }
 }
 

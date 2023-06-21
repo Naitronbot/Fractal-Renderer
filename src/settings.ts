@@ -20,6 +20,7 @@ const AA_TOGGLE = document.getElementById("aaToggle") as HTMLInputElement;
 const FAD_TOGGLE = document.getElementById("fadToggle") as HTMLInputElement;
 const RECOMP_BUTTON = document.getElementById("recompButton") as HTMLElement;
 const ERROR_BOX = document.getElementById("errorBox") as HTMLElement;
+const SLIDERS_TOGGLE = document.getElementById("slidersToggle")!;
 
 function settingSetup(slider: HTMLInputElement, box: HTMLInputElement, setting: settingVals, float: boolean) {
     slider.addEventListener("input", () => {
@@ -187,7 +188,7 @@ class Slider {
 
         let closeButton = document.createElement("button");
         closeButton.addEventListener('mouseup', e => e.button === 0 && this.delete());
-        closeButton.innerHTML = "<img src=\"close.svg\">";
+        closeButton.innerHTML = "<img src=\"assets/close.svg\">";
         this.element.append(closeButton);
 
         this.update(value || "1", true);
@@ -244,4 +245,10 @@ function updateSidebar() {
     setup(true);
     ERROR_BOX.innerHTML = "";
     ERROR_BOX.style.display = "none";
+}
+
+function toggleSliders() {
+    INPUT_GRID.classList.toggle("hidden");
+    SIDEBAR.classList.toggle("hidden");
+    requestAnimationFrame(draw);
 }
