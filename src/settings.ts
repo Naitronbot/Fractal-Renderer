@@ -202,7 +202,7 @@ class Slider {
         if (slider) {
             this.inputElem.value = val;
         }
-        if (Parser.current.userVars.has(this.varName)) {
+        if (typeof Parser !== "undefined" && Parser.current.userVars.has(this.varName)) {
             requestAnimationFrame(draw);
         }
     }
@@ -251,4 +251,12 @@ function toggleSliders() {
     INPUT_GRID.classList.toggle("hidden");
     SIDEBAR.classList.toggle("hidden");
     requestAnimationFrame(draw);
+}
+
+const SHARE_POPUP = document.getElementById("sharePopup") as HTMLElement;
+const SHARE_INPUT = document.getElementById("shareInput") as HTMLInputElement;
+function shareURL() {
+    SHARE_POPUP.style.display = "flex";
+    SHARE_INPUT.value = getURL();
+    SHARE_INPUT.select();
 }

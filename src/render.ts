@@ -130,9 +130,6 @@ const settings = {
     },
 };
 
-// let currentError = "";
-// let currentAST: ParseNode;
-//let currentVars = new Set<string>();
 let shaderUniforms: ShaderUniformContainer;
 
 const enum paramTypes {string, bool, num, user, offsetX, offsetY, zoom};
@@ -182,6 +179,11 @@ function setParam(value: string, type: paramTypes, setting?: settingVals, userVa
         } else if (type === paramTypes.zoom) {
             settings.zoom.level = parseFloat(value);
             settings.zoom.log = Math.pow(2,settings.zoom.level);
+        } else if (type === paramTypes.user) {
+            let values = value.split("/");
+            if (values.length === 4) {
+                new Slider(userVar!.split("uv")[1], values[0], values[1], values[2], values[3]);
+            }
         }
         return;
     }
@@ -191,11 +193,6 @@ function setParam(value: string, type: paramTypes, setting?: settingVals, userVa
         (settings[setting] as boolean) = value === '1' ? true : false;
     } else if (type === paramTypes.num) {
         (settings[setting] as number) = parseFloat(value);
-    } else if (type === paramTypes.user) {
-        let values = value.split("/");
-        if (values.length === 4) {
-            new Slider(userVar!.split("uv")[1], values[0], values[1], values[2], values[3]);
-        }
     }
 }
 
@@ -521,6 +518,15 @@ function getURL() {
     base += `&px=${settings.offset.pos.x}`;
     base += `&py=${settings.offset.pos.y}`;
     base += `&zm=${settings.zoom.level}`;
+    for (let slider of SIDEBAR.getElementsByClassName("slider-wrapper")) {
+        let inputs = slider.getElementsByClassName("input-box");
+        let nameInput = slider.getElementsByTagName("p")[0] as HTMLElement;
+        let valueInput = inputs[0] as HTMLInputElement;
+        let minInput = inputs[1] as HTMLInputElement;
+        let maxInput = inputs[2] as HTMLInputElement;
+        let stepInput = inputs[3] as HTMLInputElement;
+        base += `&uv${nameInput.innerHTML}=${valueInput.value}%2F${minInput.value}%2F${maxInput.value}%2F${stepInput.value}`;
+    }
     return base;
 }
 
@@ -532,12 +538,4 @@ function fullscreen() {
     } else {
         throw new Error("Error fullscreening the canvas");
     }
-}
-
-const SHARE_POPUP = document.getElementById("sharePopup") as HTMLElement;
-const SHARE_INPUT = document.getElementById("shareInput") as HTMLInputElement;
-function shareURL() {
-    SHARE_POPUP.style.display = "flex";
-    SHARE_INPUT.value = getURL();
-    SHARE_INPUT.select();
 }
