@@ -13,7 +13,7 @@ body {
     box-sizing: border-box;
 }
 
-p,input,label,button {
+p,input,label,button,select {
     font-family: 'Roboto';
 }
 
