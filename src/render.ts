@@ -115,6 +115,7 @@ const settings = {
     hueShift: 0,
     julia: false,
     smooth: false,
+    lightness: false,
     fad: false,
     equation: "z^{2}+c",
     samples: 1,
@@ -143,6 +144,7 @@ const paramNames: {[key:string]: [paramTypes, settingVals?]} = {
     "dm": [paramTypes.num, "domain"],
     "hs": [paramTypes.num, "hueShift"],
     "sm": [paramTypes.bool, "smooth"],
+    "lt": [paramTypes.bool, "lightness"],
     "px": [paramTypes.offsetX],
     "py": [paramTypes.offsetY],
     "zm": [paramTypes.zoom]
@@ -203,6 +205,7 @@ function setDefaults() {
     BREAKOUT_BOX.value = settings.breakout+"";
     JULIA_TOGGLE.checked = settings.julia;
     SMOOTH_TOGGLE.checked = settings.smooth;
+    LIGHTNESS_TOGGLE.checked = settings.lightness;
     HUESHIFT_SLIDER.value = settings.hueShift+"";
     HUESHIFT_BOX.value = settings.hueShift+"";
     BIAS_SLIDER.value = settings.bias+"";
@@ -270,7 +273,7 @@ function setup(manual: boolean) {
     shaderUniforms.add("u_bias", ()=>[settings.bias], UniformTypes.FLOAT);
     shaderUniforms.add("u_domain", ()=>[settings.domain - 1], UniformTypes.INT);
     shaderUniforms.add("u_hueShift", ()=>[settings.hueShift], UniformTypes.FLOAT);
-    shaderUniforms.add("u_toggles", ()=>[+settings.julia + 2*+settings.smooth], UniformTypes.INT);
+    shaderUniforms.add("u_toggles", ()=>[+settings.julia + 2*+settings.smooth + 4*+settings.lightness], UniformTypes.INT);
     shaderUniforms.add("u_resolution", ()=>[viewport.width, viewport.height], UniformTypes.FLOAT);
     shaderUniforms.add("u_color", ()=>[settings.coloring], UniformTypes.INT);
     shaderUniforms.add("u_angle", ()=>[settings.offset.angle], UniformTypes.FLOAT);
@@ -515,6 +518,7 @@ function getURL() {
     base += `&dm=${settings.domain}`;
     base += `&hs=${settings.hueShift}`;
     base += `&sm=${+settings.smooth}`;
+    base += `&lt=${+settings.lightness}`;
     base += `&px=${settings.offset.pos.x}`;
     base += `&py=${settings.offset.pos.y}`;
     base += `&zm=${settings.zoom.level}`;

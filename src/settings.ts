@@ -15,6 +15,8 @@ const HUESHIFT_BOX = document.getElementById("hueShiftBox") as HTMLInputElement;
 const JULIA_TOGGLE = document.getElementById("juliaToggle") as HTMLInputElement;
 const SMOOTH_LABEL = document.getElementById("smoothLabel") as HTMLElement;
 const SMOOTH_TOGGLE = document.getElementById("smoothToggle") as HTMLInputElement;
+const LIGHTNESS_LABEL = document.getElementById("domainLightnessLabel") as HTMLElement;
+const LIGHTNESS_TOGGLE = document.getElementById("domainLightnessToggle") as HTMLInputElement;
 const RECOMP_TOGGLE = document.getElementById("recompToggle") as HTMLInputElement;
 const AA_TOGGLE = document.getElementById("aaToggle") as HTMLInputElement;
 const FAD_TOGGLE = document.getElementById("fadToggle") as HTMLInputElement;
@@ -63,8 +65,10 @@ function toggleColoringActive() {
         DOMAIN_LABEL.style.display = "";
         DOMAIN_BOX.style.display = "";
         DOMAIN_SLIDER.style.display = "";
-        SMOOTH_LABEL.style.color = "#646464";
-        SMOOTH_TOGGLE.disabled = true;
+        SMOOTH_LABEL.style.display = "none";
+        SMOOTH_TOGGLE.style.display = "none";
+        LIGHTNESS_LABEL.style.display = "";
+        LIGHTNESS_TOGGLE.style.display = "";
     } else {
         BREAKOUT_LABEL.style.color = "";
         BREAKOUT_BOX.disabled = false;
@@ -75,8 +79,10 @@ function toggleColoringActive() {
         DOMAIN_LABEL.style.display = "none";
         DOMAIN_BOX.style.display = "none";
         DOMAIN_SLIDER.style.display = "none";
-        SMOOTH_LABEL.style.color = "";
-        SMOOTH_TOGGLE.disabled = false;
+        SMOOTH_LABEL.style.display = "";
+        SMOOTH_TOGGLE.style.display = "";
+        LIGHTNESS_LABEL.style.display = "none";
+        LIGHTNESS_TOGGLE.style.display = "none";
     }
 }
 
@@ -87,6 +93,11 @@ JULIA_TOGGLE.addEventListener("change", () => {
 
 SMOOTH_TOGGLE.addEventListener("change", () => {
     settings.smooth = SMOOTH_TOGGLE.checked;
+    requestAnimationFrame(draw);
+});
+
+LIGHTNESS_TOGGLE.addEventListener("change", () => {
+    settings.lightness = LIGHTNESS_TOGGLE.checked;
     requestAnimationFrame(draw);
 });
 

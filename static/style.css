@@ -180,7 +180,7 @@ button {
     height: fit-content;
     margin: 10px 0 30px 0;
     display: grid;
-    grid-template-columns: 320px 1fr 320px;
+    grid-template-columns: 320px 1fr 400px;
     grid-template-rows: 1fr;
     justify-items: center;
     flex-grow: 0;
@@ -267,7 +267,7 @@ input[disabled] {
 
 .render-wrapper {
     text-align: end;
-    grid-template-columns: 120px 1fr 1fr;
+    grid-template-columns: 170px 1fr 1fr;
 }
 
 .render-wrapper input, .settings-wrapper input {
@@ -309,7 +309,7 @@ input[disabled] {
     margin-left: 5px
 }
 
-#smoothToggle, #juliaToggle, #aaToggle {
+#smoothToggle, #juliaToggle, #aaToggle, #domainLightnessToggle {
     justify-self: start;
     width: auto;
     grid-column: 2/4;

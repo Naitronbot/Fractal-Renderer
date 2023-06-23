@@ -84,16 +84,23 @@
                 <label title="Raises final escape time to 1.1^bias" id="biasLabel" for="biasSlider">Color Bias</label>
                 <input title="Raises final escape time to 1.1^bias" id="biasSlider" type="range" min="-10.00" step="0.01" max="10.00" value="0.00">
                 <input title="Raises final escape time to 1.1^bias" id="biasBox" class="input-box" type="number" value="0">
+
                 <label title="Select between magnitude and phase lines for domain coloring" id="domainLabel" for="domainSlider" style="display: none;">Domain Coloring Mode</label>
                 <input title="Select between magnitude and phase lines for domain coloring" id="domainSlider" type="range" min="1" step="1" max="4" value="1" style="display: none;">
                 <input title="Select between magnitude and phase lines for domain coloring" id="domainBox" class="input-box" type="number" min="1" step="1" max="4" value="1" style="display: none;">
+
                 <label title="Adjusts the hue by rotating it on the color wheel" id="hueShiftLabel" for="biasSlider">Hue Shift</label>
                 <input title="Adjusts the hue by rotating it on the color wheel" id="hueShiftSlider" type="range" min="0" step="0.01" max="360.00" value="0.00">
                 <input title="Adjusts the hue by rotating it on the color wheel" id="hueShiftBox" class="input-box" type="number" min="0.00" max="360.00" value="0">
+
                 <label title="Average subpixel samples over multiple frames to smooth out the image" id="aaLabel" for="aaToggle">Anti Aliasing</label>
                 <input title="Average subpixel samples over multiple frames to smooth out the image" id="aaToggle" type="checkbox">
+
                 <label title="Ajust iteration count to make transition between iterations smoother (might break on non-mandelbrot fractals)" id="smoothLabel" for="smoothToggle">Smooth Coloring</label>
                 <input title="Ajust iteration count to make transition between iterations smoother (might break on non-mandelbrot fractals)" id="smoothToggle" type="checkbox">
+
+                <label title="Adjusts brightness based on magnitude in domain coloring" id="domainLightnessLabel" for="domainLightnessToggle" style="display: none;">Lightness by Magnitude</label>
+                <input title="Adjusts brightness based on magnitude in domain coloring" id="domainLightnessToggle" type="checkbox" style="display: none;">
             </div>
         </div>
     </div>

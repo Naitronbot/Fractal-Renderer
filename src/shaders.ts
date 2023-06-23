@@ -423,6 +423,9 @@ function getFragment(): string {
         angle = 180.0/pi * atan(z.y,z.x) + shift;
         angle = mod(angle,360.0);
         vec3 hsl = vec3(angle, 1.0, 0.5);
+        if ((u_toggles&4) == 4) {
+            hsl.z = 2.0/pi * atan(mag);
+        }
 
         float phaseConst;
         float magConst;
