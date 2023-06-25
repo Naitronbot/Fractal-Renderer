@@ -365,32 +365,42 @@ function getFragment(): string {
         return ${functionString};
     }
     
-    vec3 color(float x) {
+    vec3 color(float iter, float totalIter) {
+        float x;
+        if (iter >= totalIter && u_color != 10) {
+            x = 1.0;
+        } else {
+            x = iter/totalIter;
+        }
         float shift = u_hueShift;
-        x = pow(x,pow(1.1,u_bias));
         
-        if (u_color == 1 || u_color == 10) {
+        if (u_color == 1) {
             if (x >= 1.0 || x <= 0.0) {
                 return vec3(0.0);
             }
+            x = pow(x,pow(1.1,u_bias));
             float angle = mod(360.0 * x + shift, 360.0);
             vec3 hsl = vec3(angle, 1.0, 0.5);
             return hsltorgb(hsl);
         }
         if (u_color == 3) {
             x = clamp(x,0.0,1.0);
+            x = pow(x,pow(1.1,u_bias));
             return vec3(1.0-x);
         }
         if (u_color == 4) {
             x = clamp(x,0.0,1.0);
+            x = pow(x,pow(1.1,u_bias));
             return vec3(x);
         }
         if (u_color == 5) {
             x = clamp(x,0.0,1.0);
+            x = pow(x,pow(1.1,u_bias));
             return vec3(0.706+x*0.294,0.690+x*0.310,1.0);
         }
         if (u_color == 6) {
             x = clamp(x,0.0,1.0);
+            x = pow(x,pow(1.1,u_bias));
             x = 1.0-x;
             return vec3(0.706+x*0.294,0.690+x*0.310,1.0);
         }
@@ -408,7 +418,18 @@ function getFragment(): string {
         }
         if (u_color == 9) {
             x = clamp(x,0.0,1.0);
+            x = pow(x,pow(1.1,u_bias));
             return vec3(x*0.176,x*0.439,x*0.702);
+        }
+        if (u_color == 10) {
+            x = mod(x,1.0);
+            if (x >= 1.0 || x <= 0.0) {
+                return vec3(0.0);
+            }
+            x = pow(x,pow(1.1,u_bias));
+            float angle = mod(360.0 * x + shift, 360.0);
+            vec3 hsl = vec3(angle, 1.0, 0.5);
+            return hsltorgb(hsl);
         }
     }
 
@@ -454,8 +475,8 @@ function getFragment(): string {
         } else {
             z = vec2(0.0);
         }
-        float floatIter = float(u_iterations);
-        float iter = floatIter;
+        int totalIter = u_iterations;
+        int iter = totalIter;
         float dist = 0.0;
         if (u_color == 2) {
             for (int i = 0; i < u_iterations; i++) {
@@ -465,13 +486,13 @@ function getFragment(): string {
             vec2 lastIter;
             for (int i = 0; i < u_iterations; i++) {
                 if (z.x*z.x + z.y*z.y > u_breakout*u_breakout) {
-                    iter = float(i);
+                    iter = i;
                     break;
                 }
                 lastIter = z;
                 z = func(z, c);
                 if (isnan(z.x) || isnan(z.y)) {
-                    iter = float(i);
+                    iter = i;
                     z = lastIter;
                     break;
                 }
@@ -481,33 +502,36 @@ function getFragment(): string {
             vec2 prevZ;
             for (int i = 0; i < u_iterations; i++) {
                 if (z.x*z.x + z.y*z.y > u_breakout*u_breakout) {
-                    iter = float(i);
+                    iter = i;
                     break;
                 }
                 prevZ = z;
                 z = func(z, c);
                 if (isnan(z.x) || isnan(z.y)) {
-                    iter = float(i);
+                    iter = i;
                     z = prevZ;
                     break;
                 }
             }
         }
-    
-        if ((u_toggles&2) == 2 && iter != floatIter) {
+
+        float floatIterTotal = float(totalIter);
+        float floatIter = float(iter);
+
+        if ((u_toggles&2) == 2 && floatIter != floatIterTotal) {
             float log_zn = log(z.x*z.x+z.y*z.y)/2.0;
             float nu = log(log_zn / log(2.0)) / log(2.0);
     
-            iter = iter + 1.0 - nu;
+            floatIter = floatIter + 1.0 - nu;
         }
         
         // Output final color
         if (u_color == 2) {
             return vec4(domain(z), 1.0);
         } else if (u_color == 10) {
-            return vec4(color(mod(dist/iter,1.0)), 1.0);
+            return vec4(color(dist, floatIter), 1.0);
         } else {
-            return vec4(color(iter/floatIter), 1.0);
+            return vec4(color(floatIter, floatIterTotal), 1.0);
         }
     }
     
