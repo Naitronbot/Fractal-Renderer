@@ -290,23 +290,25 @@ input[disabled] {
     position: absolute;
     align-items: center;
     justify-content: space-between;
-    left: -10px;
+    gap: 5px;
+    left: 95px;
     top: -40px;
     height: 32px;
-    padding: 5px;
-    transform: translate(-50%, 0);
+    padding: 5px 2px 5px 2px;
+    transform: translate(-100%, 0);
     background-color: #111111;
 }
 
 #sharePopup input {
     height: 100%;
+    width: 200px;
 }
 
 #sharePopup button {
     background-color: transparent;
     margin: 0;
-    height: 100%;
-    margin-left: 5px
+    height: 28px;
+    width: 28px;
 }
 
 #smoothToggle, #juliaToggle, #aaToggle, #domainLightnessToggle {
@@ -341,6 +343,10 @@ input[disabled] {
 }
 
 @media (max-width: 800px) {
+    #sharePopup {
+        left: 65px;
+    }
+
     .input-wrapper {
         grid-template-columns: 100%;
         grid-template-rows: 1fr 1fr 1fr;

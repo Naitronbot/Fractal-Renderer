@@ -271,3 +271,12 @@ function shareURL() {
     SHARE_INPUT.value = getURL();
     SHARE_INPUT.select();
 }
+
+function copyShare() {
+    SHARE_INPUT.select();
+    SHARE_INPUT.setSelectionRange(0, Infinity);
+
+    navigator.clipboard.writeText(SHARE_INPUT.value);
+
+    SHARE_POPUP.style.display = 'none';
+}

@@ -35,7 +35,7 @@
                 <button title="Reset Offset/Zoom" id="resetButton" onclick="resetView()"><img src="assets/refresh.svg"></button>
                 <button title="Download Screenshot" id="downloadButton" onclick="settings.antiAlias ? (settings.screenshot = true) : (downloadCanvas())"><img src="assets/download.svg"></button>
                 <div class="share-wrapper button-wrapper">
-                    <div id="sharePopup" style="display: none;"><input id="shareInput" readonly="readonly"><button onclick="SHARE_POPUP.style.display = 'none'"><img src="assets/close.svg"></button></div>
+                    <div id="sharePopup" style="display: none;"><button onclick="copyShare()"><img src="assets/copy.svg"></button><input id="shareInput" readonly="readonly"><button onclick="SHARE_POPUP.style.display = 'none'"><img src="assets/close.svg"></button></div>
                     <button title="Get Fractal URL" id="urlButton" onclick="shareURL()"><img src="assets/share.svg"></button>
                 </div>
                 <button title="Fullscreen" id="fullscreenButton" onclick="fullscreen()"><img src="assets/fullscreen.svg"></button>
