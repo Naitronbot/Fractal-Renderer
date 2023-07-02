@@ -485,7 +485,7 @@ function getFragment(): string {
         } else if (u_color == 10) {
             vec2 lastIter;
             for (int i = 0; i < u_iterations; i++) {
-                if (z.x*z.x + z.y*z.y > u_breakout*u_breakout) {
+                if (length(z) > u_breakout) {
                     iter = i;
                     break;
                 }
@@ -501,7 +501,7 @@ function getFragment(): string {
         } else {
             vec2 prevZ;
             for (int i = 0; i < u_iterations; i++) {
-                if (z.x*z.x + z.y*z.y > u_breakout*u_breakout) {
+                if (length(z) > u_breakout) {
                     iter = i;
                     break;
                 }
