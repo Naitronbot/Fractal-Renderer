@@ -54,8 +54,6 @@ function logGLSL() {
 }
 
 function logShader() {
-    let parser = new Parser(settings.equation);
-    let parsed = parser.parse()!;
     console.log(getFragment());
 }
 

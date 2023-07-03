@@ -168,6 +168,7 @@ class Slider {
         this.inputElem.addEventListener('input', () => this.update(this.inputElem.value, false));
         this.inputElem.classList.add("input-box");
         this.inputElem.type = "number";
+        this.inputElem.step = step || "0.01";
         sliderDiv.append(this.inputElem);
 
         let boundsDiv = document.createElement("div");
@@ -195,7 +196,10 @@ class Slider {
         boundsDiv.append(createInput(max || "10", value => this.sliderElem.max = value));
 
         addText("Step: ");
-        boundsDiv.append(createInput(step || "0.01", value => this.sliderElem.step = value));
+        boundsDiv.append(createInput(step || "0.01", value => {
+            this.sliderElem.step = value;
+            this.inputElem.step = value;
+        }));
 
         let closeButton = document.createElement("button");
         closeButton.addEventListener('mouseup', e => e.button === 0 && this.delete());
