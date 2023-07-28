@@ -1,4 +1,6 @@
-function recursiveDecompose(node: ParseNode): string {
+import { Parser, ParseNode, NumberNode, OneOperatorNode, TwoOperatorNode, VariableNode } from "parser";
+
+export function recursiveDecompose(node: ParseNode): string {
     if (node instanceof NumberNode) {
         if (node.value === "i") {
             return "vec2(0.0,1.0)";
@@ -43,7 +45,7 @@ function recursiveDecompose(node: ParseNode): string {
     throw new Error("WebGL Error: Unknown node type");
 }
 
-function getFragment(): string {
+export function getFragment(): string {
     let functionString = recursiveDecompose(Parser.current.ast);
     return `#version 300 es
     precision highp float;
@@ -556,7 +558,7 @@ function getFragment(): string {
     }`;
 }
 
-function getVertex(): string {
+export function getVertex(): string {
     return `#version 300 es
     in vec4 a_position;
     out vec2 uv;
@@ -567,7 +569,7 @@ function getVertex(): string {
     }`;
 }
 
-function getCanvasShader(): string {
+export function getCanvasShader(): string {
     return `#version 300 es
     precision highp float;
 

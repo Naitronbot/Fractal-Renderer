@@ -1,3 +1,7 @@
+import { sidebarVars } from "sliders";
+import { pageState } from "state";
+import { UIElements } from "ui";
+
 // Tokenizer regex, links regular expressions to their corresponding token names
 const TOKENS: [RegExp,string][] = [
     [/^(\d+\.?\d*|\d*\.?\d+|\\pi)/, "number"],
@@ -51,7 +55,7 @@ class Token {
 }
 
 // Input TokenStream, procedurally tokenizes input string as needed
-class TokenStream {
+export class TokenStream {
     input: string;
     current: Token | null;
 
@@ -100,16 +104,16 @@ class TokenStream {
     }
 }
 
-type ParseNode = NumberNode | VariableNode | TwoOperatorNode | OneOperatorNode;
+export type ParseNode = NumberNode | VariableNode | TwoOperatorNode | OneOperatorNode;
 
-class NumberNode {
+export class NumberNode {
     value: string;
     constructor(value: string) {
         this.value = value;
     }
 }
 
-class VariableNode {
+export class VariableNode {
     value: string;
     userDefined: boolean;
     constructor(value: string, user: boolean) {
@@ -118,7 +122,7 @@ class VariableNode {
     }
 }
 
-class TwoOperatorNode {
+export class TwoOperatorNode {
     left: ParseNode;
     operator: string;
     right: ParseNode;
@@ -129,7 +133,7 @@ class TwoOperatorNode {
     } 
 }
 
-class OneOperatorNode {
+export class OneOperatorNode {
     operator: string;
     value: ParseNode;
     constructor(operator: string, value: ParseNode) {
@@ -139,8 +143,8 @@ class OneOperatorNode {
 }
 
 // Parses the current expression, and stores info related to it
-class Parser {
-    static current: Parser = new Parser(settings.equation);
+export class Parser {
+    static current: Parser;
 
     private equation: string; // Equation to parse, use settings.equation for external equation
     ast: ParseNode; // Parsed AST of current equation
@@ -149,7 +153,7 @@ class Parser {
     needsVars: boolean; // If there are variables in the current equation that the user has not defined
     
     constructor(equation: string) {
-        settings.equation = equation;
+        pageState.settings.equation = equation;
         this.equation = equation;
         this.userVars = new Set();
         this.ast = new NumberNode("0");
@@ -158,12 +162,9 @@ class Parser {
     }
 
     parse() {
-        // TODO: ABSTRACT ERROR BOX MANIPULATION
-
         // Handle case when input is empty
         if (this.equation === "") {
-            ERROR_BOX.innerHTML = "";
-            ERROR_BOX.style.display = "none";
+            UIElements.errorBox.hide();
             return true;
         }
 
@@ -176,16 +177,15 @@ class Parser {
             }
 
             this.ast = ast;
-            ERROR_BOX.innerHTML = "";
-            ERROR_BOX.style.display = "none";
+            UIElements.errorBox.hide();
             this.success = true;
             this.manageVariables();
             Parser.current = this;
             return true;
         } catch(error) {
             if(!(error instanceof ParseError)) { throw error; }
-            ERROR_BOX.innerHTML = error.name + ": " + error.message;
-            ERROR_BOX.style.display = "";
+            
+            UIElements.errorBox.show(error.name, error.message);
             this.manageVariables();
             Parser.current = this;
             return false;
@@ -195,19 +195,18 @@ class Parser {
     // Handles displaying of variable errors, variable button UI, and determines if there are undefined variables
     manageVariables() {
         if (!this.success) {
-            SLIDER_BUTTON.classList.add("disabled");
+            UIElements.sliderButton.classList.add("disabled");
             return;
         }
         for (let val of this.userVars) {
             if (!sidebarVars.has(val)) {
-                ERROR_BOX.innerHTML = `Variable Error: ${val} is not defined`;
-                ERROR_BOX.style.display = "";
-                SLIDER_BUTTON.classList.remove("disabled");
+                UIElements.errorBox.show("Variable Error", `${val} is not defined`);
+                UIElements.sliderButton.classList.remove("disabled");
                 this.needsVars = true;
                 return;
             }
         }
-        SLIDER_BUTTON.classList.add("disabled");
+        UIElements.sliderButton.classList.add("disabled");
         this.needsVars = false;
     }
 
