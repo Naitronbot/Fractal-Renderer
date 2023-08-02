@@ -322,7 +322,6 @@ input[disabled] {
 }
 
 :root {
-    touch-action: pan-x pan-y;
     height: 100%;
 }
 
