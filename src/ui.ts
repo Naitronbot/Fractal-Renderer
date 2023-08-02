@@ -26,22 +26,6 @@ type UIToggle = {
     hide: (hidden: boolean) => void,
 };
 
-const SHARE_INPUT = document.getElementById("shareInput") as HTMLInputElement;
-function shareURL() {
-    UIElements.sharePopup.style.display = "flex";
-    SHARE_INPUT.value = getURL();
-    SHARE_INPUT.select();
-}
-
-function copyShare() {
-    SHARE_INPUT.select();
-    SHARE_INPUT.setSelectionRange(0, Infinity);
-
-    navigator.clipboard.writeText(SHARE_INPUT.value);
-
-    UIElements.sharePopup.style.display = 'none';
-}
-
 const buttons = [
     {
         id: "slider",
@@ -80,13 +64,28 @@ const buttons = [
     {
         id: "url",
         event: () => {
-            shareURL()
+            const shareInput = UIElements.shareInput as HTMLInputElement;
+            UIElements.sharePopup.style.display = "flex";
+            shareInput.value = getURL();
+            shareInput.select();
         }
     },
     {
         id: "copyUrl",
         event: () => {
-            copyShare()
+            const shareInput = UIElements.shareInput as HTMLInputElement;
+            shareInput.select();
+            shareInput.setSelectionRange(0, Infinity);
+
+            navigator.clipboard.writeText(shareInput.value);
+
+            UIElements.sharePopup.style.display = 'none';
+        }
+    },
+    {
+        id: 'closeUrl',
+        event: () => {
+            UIElements.sharePopup.style.display = 'none'
         }
     },
     {
@@ -208,7 +207,8 @@ const additionalUI = [
     "mqInput",
     "inputGrid",
     "main",
-    "sharePopup"
+    "sharePopup",
+    "shareInput"
 ] as const;
 
 const errorBox = {

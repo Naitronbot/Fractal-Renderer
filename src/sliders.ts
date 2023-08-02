@@ -1,6 +1,6 @@
 import { Parser } from "parser";
 import { RenderContext } from "render";
-import { getURL } from "state";
+import { expressionState } from "state";
 import { UIElements } from "ui";
 
 export const sidebarVars: Set<string> = new Set();
@@ -89,7 +89,7 @@ export class Slider {
         if (slider) {
             this.inputElem.value = val;
         }
-        if (typeof Parser !== "undefined" && Parser.current.userVars.has(this.varName)) {
+        if (typeof Parser !== "undefined" && expressionState.userVars.has(this.varName)) {
             requestAnimationFrame(RenderContext.draw);
         }
     }
@@ -98,9 +98,9 @@ export class Slider {
         this.element?.remove();
         sidebarVars.delete(this.varName);
         delete sidebarVals[this.varName];
-        for (let val of Parser.current.userVars) {
+        for (let val of expressionState.userVars) {
             if (!sidebarVars.has(val)) {
-                Parser.current.manageVariables();
+                manageVariables();
                 RenderContext.current.setup(true);
                 break;
             }
@@ -114,11 +114,11 @@ export function updateSidebar() {
         return;
     }
     UIElements.sliderButton.classList.add("disabled");
-    if (!Parser.current) {
+    if (expressionState.type !== "success") {
         return;
     }
     let newVars: string[] = [];
-    Parser.current.userVars.forEach(val => {
+    expressionState.userVars.forEach(val => {
         if (!sidebarVars.has(val)) {
             newVars.push(val);
         }
@@ -128,7 +128,25 @@ export function updateSidebar() {
             new Slider(val);
         }
     }
-    Parser.current.manageVariables();
+    manageVariables();
     RenderContext.current.setup(true);
     UIElements.errorBox.hide();
+}
+
+export let needsVars = false;
+export function manageVariables() {
+    if (expressionState.type !== "success") {
+        UIElements.sliderButton.classList.add("disabled");
+        return;
+    }
+    for (let val of expressionState.userVars) {
+        if (!sidebarVars.has(val)) {
+            UIElements.errorBox.show("Variable Error", `${val} is not defined`);
+            UIElements.sliderButton.classList.remove("disabled");
+            needsVars = true;
+            return;
+        }
+    }
+    UIElements.sliderButton.classList.add("disabled");
+    needsVars = false;
 }

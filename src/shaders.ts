@@ -1,4 +1,5 @@
-import { Parser, ParseNode, NumberNode, OneOperatorNode, TwoOperatorNode, VariableNode } from "parser";
+import { ParseNode, NumberNode, OneOperatorNode, TwoOperatorNode, VariableNode } from "parser";
+import { expressionState } from "state";
 
 export function recursiveDecompose(node: ParseNode): string {
     if (node instanceof NumberNode) {
@@ -46,7 +47,7 @@ export function recursiveDecompose(node: ParseNode): string {
 }
 
 export function getFragment(): string {
-    let functionString = recursiveDecompose(Parser.current.ast);
+    let functionString = recursiveDecompose(expressionState.ast!);
     return `#version 300 es
     precision highp float;
     uniform int u_iterations;
@@ -65,7 +66,7 @@ export function getFragment(): string {
 
     ${(() => {
         let unif = "";
-        for (let uni of Parser.current.userVars.values()) {
+        for (let uni of expressionState.userVars.values()) {
             unif += `uniform vec2 u_${uni};\n`;
         }
         return unif;

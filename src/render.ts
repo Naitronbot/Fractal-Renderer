@@ -1,9 +1,8 @@
 import { getCanvasShader, getFragment, getVertex } from "shaders";
 import { UIElements } from "ui";
-import { pageState } from "state";
-import { Parser } from "parser";
+import { expressionState, pageState } from "state";
 import { Point } from "shared";
-import { sidebarVals } from "sliders";
+import { needsVars, sidebarVals } from "sliders";
 
 // Structure for setting, binding, and updating shader uniforms
 const enum UniformTypes {FLOAT, INT};
@@ -134,7 +133,7 @@ export class RenderContext {
     }
 
     setup(manual: boolean) {
-        if (!Parser.current.success || Parser.current.needsVars) {
+        if (expressionState.type !== "success" || needsVars) {
             return;
         }
     
@@ -175,7 +174,7 @@ export class RenderContext {
         this.shaderUniforms.add("u_resolution", ()=>[pageState.viewport.width, pageState.viewport.height], UniformTypes.FLOAT);
         this.shaderUniforms.add("u_color", ()=>[pageState.settings.coloring], UniformTypes.INT);
         this.shaderUniforms.add("u_angle", ()=>[pageState.settings.offset.angle], UniformTypes.FLOAT);
-        for (let userVar of Parser.current.userVars) {
+        for (let userVar of expressionState.userVars) {
             this.shaderUniforms.add("u_" + userVar, ()=>[sidebarVals[userVar], 0], UniformTypes.FLOAT);
         }
     

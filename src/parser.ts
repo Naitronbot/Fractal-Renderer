@@ -1,7 +1,3 @@
-import { sidebarVars } from "sliders";
-import { pageState } from "state";
-import { UIElements } from "ui";
-
 // Tokenizer regex, links regular expressions to their corresponding token names
 const TOKENS: [RegExp,string][] = [
     [/^(\d+\.?\d*|\d*\.?\d+|\\pi)/, "number"],
@@ -34,7 +30,7 @@ const BRACKETS: {[open: string]: string} = {
     "|": "|"
 };
 
-class ParseError implements Error {
+export class ParseError implements Error {
     name: string;
     message: string;
 
@@ -144,31 +140,20 @@ export class OneOperatorNode {
 
 // Parses the current expression, and stores info related to it
 export class Parser {
-    static current: Parser;
+    private static userVars: Set<string>; // Set of user defined variables
 
-    private equation: string; // Equation to parse, use settings.equation for external equation
-    ast: ParseNode; // Parsed AST of current equation
-    userVars: Set<string>; // Set of user defined variables
-    success: boolean; // If the parser encountered no syntax errors
-    needsVars: boolean; // If there are variables in the current equation that the user has not defined
-    
-    constructor(equation: string) {
-        pageState.settings.equation = equation;
-        this.equation = equation;
+    static parse(equation: string): {type: "blank" | "success" | "error", ast?: ParseNode, error?: ParseError, userVars: Set<string>} {  
         this.userVars = new Set();
-        this.ast = new NumberNode("0");
-        this.success = false;
-        this.needsVars = false;
-    }
-
-    parse() {
+        
         // Handle case when input is empty
-        if (this.equation === "") {
-            UIElements.errorBox.hide();
-            return true;
+        if (equation === "") {
+            return {
+                type: "blank",
+                userVars: this.userVars
+            };
         }
 
-        let stream = new TokenStream(this.equation);
+        let stream = new TokenStream(equation);
         try {
             let ast = this.recursiveParse(stream, 0);
 
@@ -176,41 +161,23 @@ export class Parser {
                 throw ast;
             }
 
-            this.ast = ast;
-            UIElements.errorBox.hide();
-            this.success = true;
-            this.manageVariables();
-            Parser.current = this;
-            return true;
+            return {
+                type: "success",
+                ast: ast,
+                userVars: this.userVars
+            };
         } catch(error) {
             if(!(error instanceof ParseError)) { throw error; }
             
-            UIElements.errorBox.show(error.name, error.message);
-            this.manageVariables();
-            Parser.current = this;
-            return false;
+            return {
+                type: "error",
+                error: error,
+                userVars: this.userVars
+            };
         }
     }
 
-    // Handles displaying of variable errors, variable button UI, and determines if there are undefined variables
-    manageVariables() {
-        if (!this.success) {
-            UIElements.sliderButton.classList.add("disabled");
-            return;
-        }
-        for (let val of this.userVars) {
-            if (!sidebarVars.has(val)) {
-                UIElements.errorBox.show("Variable Error", `${val} is not defined`);
-                UIElements.sliderButton.classList.remove("disabled");
-                this.needsVars = true;
-                return;
-            }
-        }
-        UIElements.sliderButton.classList.add("disabled");
-        this.needsVars = false;
-    }
-
-    recursiveParse(stream: TokenStream, precedence: number): ParseNode | ParseError {
+    static recursiveParse(stream: TokenStream, precedence: number): ParseNode | ParseError {
         let left = stream.next();
         
         // Check for end of input
@@ -369,7 +336,7 @@ export class Parser {
     }
 
     // Parse a math group (parenthesis, brackets, or curly brackets)
-    parseGroup(stream: TokenStream, opening: Token | null): ParseNode | ParseError {
+    static parseGroup(stream: TokenStream, opening: Token | null): ParseNode | ParseError {
         if (opening === null) {
             opening = stream.next();
             if (opening === null) {
@@ -399,7 +366,7 @@ export class Parser {
     }
 
     // Parse a latex group (un-escaped curly brackets)
-    parseLatexGroup(stream: TokenStream, checkOpening: boolean): ParseNode | ParseError {
+    static parseLatexGroup(stream: TokenStream, checkOpening: boolean): ParseNode | ParseError {
         if (checkOpening) {
             let opening = stream.next();
             if (opening === null) {
@@ -430,7 +397,7 @@ export class Parser {
     }
 
     // Parse a function: \name()
-    parseFunction(stream: TokenStream, left: Token): ParseNode | ParseError {
+    static parseFunction(stream: TokenStream, left: Token): ParseNode | ParseError {
         if (left.value === "backslash") {
             throw new ParseError("Parsing Error", "Unexpected backslash");
         }

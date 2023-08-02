@@ -1,5 +1,5 @@
-import { TokenStream, Parser } from "parser";
-import { pageState } from "state";
+import { TokenStream } from "parser";
+import { expressionState, pageState } from "state";
 import { getFragment, recursiveDecompose } from "shaders";
 
 window.logLatex = () => {
@@ -17,13 +17,25 @@ window.logTokens = () => {
 }
 
 window.logAST = () => {
-    console.log(Parser.current.ast);
+    if (expressionState.type === "success") {
+        console.log(expressionState.ast);
+    } else {
+        console.log("Expression is currently an error");
+    }
 }
 
 window.logGLSL = () => {
-    console.log(recursiveDecompose(Parser.current.ast));
+    if (expressionState.type === "success") {
+        console.log(recursiveDecompose(expressionState.ast!));
+    } else {
+        console.log("Expression is currently an error");
+    }
 }
 
 window.logShader = () => {
-    console.log(getFragment());
+    if (expressionState.type === "success") {
+        console.log(getFragment());
+    } else {
+        console.log("Expression is currently an error");
+    }
 }

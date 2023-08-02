@@ -1,8 +1,8 @@
 import { Parser } from "parser";
-import { pageState } from "state";
+import { pageState, setExpressionState } from "state";
 import { UIElements } from "ui";
 import { RenderContext } from "render";
-import { updateSidebar } from "sliders";
+import { manageVariables, updateSidebar } from "sliders";
 
 declare const MathQuill: any;
 const MQ = MathQuill.getInterface(2);
@@ -27,8 +27,14 @@ export function initializeMQ() {
 
 function fieldEdit() {
     UIElements.fixGrid();
-    let parsed = new Parser(MQ_FIELD.latex()).parse();
-    if (parsed) {
-        RenderContext.current.setup(false);
+    let parsed = Parser.parse(MQ_FIELD.latex());
+    setExpressionState(parsed);
+    if (parsed.type === "error") {
+        UIElements.errorBox.show(parsed.error?.name!, parsed.error?.message!);
+    } else {
+        UIElements.errorBox.hide();
     }
+    manageVariables();
+    pageState.settings.equation = MQ_FIELD.latex();
+    RenderContext.current.setup(false);
 }

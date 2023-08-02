@@ -2,6 +2,7 @@ import { Slider } from "sliders";
 import { Point } from "shared";
 import { UIElements } from "ui";
 import { RenderContext } from "render";
+import { ParseError, ParseNode } from "parser";
 
 // Page State Object
 type settingVals = keyof typeof pageState.settings;
@@ -46,6 +47,15 @@ export const pageState = {
         },
     }
 };
+
+export let expressionState: {type: "success" | "error" | "blank", userVars: Set<string>, ast?: ParseNode, error?: ParseError, set?(obj: typeof expressionState): void} = {
+    type: "blank",
+    userVars: new Set(),
+};
+
+export function setExpressionState(obj: typeof expressionState) {
+    expressionState = obj;
+}
 
 window.pageState = pageState;
 
