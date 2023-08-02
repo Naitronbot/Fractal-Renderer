@@ -32,7 +32,8 @@ document.addEventListener("mouseup", () => {
     pageState.viewport.pointer.dragging = false;
 });
 UIElements.canvas.addEventListener("wheel", e => {
-    zoomScreen(new Point(e.offsetX,e.offsetY),-0.002*e.deltaY);
+    e.preventDefault();
+    zoomScreen(new Point(e.offsetX,e.offsetY),-0.002*e.deltaY*(e.ctrlKey ? 4 : 1));
     requestAnimationFrame(RenderContext.draw);
 });
 
