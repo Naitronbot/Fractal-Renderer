@@ -127,7 +127,7 @@ export function getFragment(): string {
     vec2 cpow2(vec2 z, float n) {
         if (z.x == 0.0) {
             float angle = (z.y >= 0.0) ? pi/2.0 : -pi/2.0;
-            return pow(length(z),n)*vec2(cos(angle),sin(angle));
+            return pow(length(z),n)*vec2(cos(n*angle),sin(n*angle));
         }
         float angle = n*atan(z.y,z.x);
         return pow(length(z),n)*vec2(cos(angle),sin(angle));
