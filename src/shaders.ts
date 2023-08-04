@@ -1,4 +1,7 @@
-function recursiveDecompose(node: ParseNode): string {
+import { ParseNode, NumberNode, OneOperatorNode, TwoOperatorNode, VariableNode } from "parser";
+import { expressionState } from "state";
+
+export function recursiveDecompose(node: ParseNode): string {
     if (node instanceof NumberNode) {
         if (node.value === "i") {
             return "vec2(0.0,1.0)";
@@ -43,8 +46,8 @@ function recursiveDecompose(node: ParseNode): string {
     throw new Error("WebGL Error: Unknown node type");
 }
 
-function getFragment(): string {
-    let functionString = recursiveDecompose(Parser.current.ast);
+export function getFragment(): string {
+    let functionString = recursiveDecompose(expressionState.ast!);
     return `#version 300 es
     precision highp float;
     uniform int u_iterations;
@@ -63,7 +66,7 @@ function getFragment(): string {
 
     ${(() => {
         let unif = "";
-        for (let uni of Parser.current.userVars.values()) {
+        for (let uni of expressionState.userVars.values()) {
             unif += `uniform vec2 u_${uni};\n`;
         }
         return unif;
@@ -124,7 +127,7 @@ function getFragment(): string {
     vec2 cpow2(vec2 z, float n) {
         if (z.x == 0.0) {
             float angle = (z.y >= 0.0) ? pi/2.0 : -pi/2.0;
-            return pow(length(z),n)*vec2(cos(angle),sin(angle));
+            return pow(length(z),n)*vec2(cos(n*angle),sin(n*angle));
         }
         float angle = n*atan(z.y,z.x);
         return pow(length(z),n)*vec2(cos(angle),sin(angle));
@@ -556,7 +559,7 @@ function getFragment(): string {
     }`;
 }
 
-function getVertex(): string {
+export function getVertex(): string {
     return `#version 300 es
     in vec4 a_position;
     out vec2 uv;
@@ -567,7 +570,7 @@ function getVertex(): string {
     }`;
 }
 
-function getCanvasShader(): string {
+export function getCanvasShader(): string {
     return `#version 300 es
     precision highp float;
 

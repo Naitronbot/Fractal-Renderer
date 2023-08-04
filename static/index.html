@@ -13,32 +13,27 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
     <script src="mathquill-0.10.1/mathquill.js"></script>
-    <script src="shaders.js" defer></script>
-    <script src="settings.js" defer></script>
-    <script src="render.js" defer></script>
-    <script src="parser.js" defer></script>
-    <script src="input.js" defer></script>
-    <script src="events.js" defer></script>
+    <script src="fractal.js" defer></script>
 </head>
 <body>
     <div id="sidebar">
-        <button class="disabled" id="sliderButton" onclick="updateSidebar()">Add Sliders</button>
+        <button class="disabled" id="sliderButton">Add Sliders</button>
     </div>
     <div class="main" id="main">
         <div id="canvasWrapper" class="canvas-wrapper">
-            <canvas id="webGLCanvas" width="300px" height="300px"></canvas>
+            <canvas id="canvas" width="300px" height="300px"></canvas>
         </div>
         <div class="button-wrapper info-wrapper">
             <p id="coordDisplay"></p>
             <div class="button-wrapper">
-                <button title="View Sliders" style="display: none;" id="slidersToggle" onclick="toggleSliders()"><img src="assets/sliders.svg"></button>
-                <button title="Reset Offset/Zoom" id="resetButton" onclick="resetView()"><img src="assets/refresh.svg"></button>
-                <button title="Download Screenshot" id="downloadButton" onclick="settings.antiAlias ? (settings.screenshot = true) : (downloadCanvas())"><img src="assets/download.svg"></button>
+                <button title="View Sliders" style="display: none;" id="slidersToggleButton"><img src="assets/sliders.svg"></button>
+                <button title="Reset Offset/Zoom" id="resetButton"><img src="assets/refresh.svg"></button>
+                <button title="Download Screenshot" id="downloadButton"><img src="assets/download.svg"></button>
                 <div class="share-wrapper button-wrapper">
-                    <div id="sharePopup" style="display: none;"><button onclick="copyShare()"><img src="assets/copy.svg"></button><input id="shareInput" readonly="readonly"><button onclick="SHARE_POPUP.style.display = 'none'"><img src="assets/close.svg"></button></div>
-                    <button title="Get Fractal URL" id="urlButton" onclick="shareURL()"><img src="assets/share.svg"></button>
+                    <div id="sharePopup" style="display: none;"><button id="copyUrlButton"><img src="assets/copy.svg"></button><input id="shareInput" readonly="readonly"><button id="closeUrlButton"><img src="assets/close.svg"></button></div>
+                    <button title="Get Fractal URL" id="urlButton"><img src="assets/share.svg"></button>
                 </div>
-                <button title="Fullscreen" id="fullscreenButton" onclick="fullscreen()"><img src="assets/fullscreen.svg"></button>
+                <button title="Fullscreen" id="fullscreenButton"><img src="assets/fullscreen.svg"></button>
             </div>
         </div>
         <div id="inputGrid" class="input-wrapper">
@@ -55,11 +50,11 @@
             <div class="mq-wrapper">
                 <div class="mq-inner">
                     <div id="mqInput"></div>
-                    <button id="recompButton" onclick="setup(true)" style="display: none;"><img src="assets/done.svg"></button>
+                    <button id="manualRecompButton" style="display: none;"><img src="assets/done.svg"></button>
                 </div>
                 <div>
-                    <label title="Make rendering the fractal happen on button press, instead of whenever the equation is edited" id="recompLabel" for="recompToggle">Manual Recompile</label>
-                    <input title="Make rendering the fractal happen on button press, instead of whenever the equation is edited" id="recompToggle" type="checkbox">
+                    <label title="Make rendering the fractal happen on button press, instead of whenever the equation is edited" id="manualRecompLabel" for="manualRecompToggle">Manual Recompile</label>
+                    <input title="Make rendering the fractal happen on button press, instead of whenever the equation is edited" id="manualRecompToggle" type="checkbox">
                 </div>
                 <div>
                     <label title="Allow for rotation of the canvas on touchscreen devices (why)" id="fadLabel" for="fadToggle">Fad Mode</label>
@@ -68,8 +63,8 @@
                 <div id="errorBox" style="display: none;"></div>
             </div>
             <div class="render-wrapper">
-                <label id="coloringLabel" for="coloringMode">Coloring Mode</label>
-                <select name="coloring mode" id="coloringMode">
+                <label id="coloringLabel" for="coloring">Coloring Mode</label>
+                <select name="coloring mode" id="coloringDropdown">
                     <option value="1">Escape Time Hue</option>
                     <option value="2">Domain Coloring</option>
                     <option value="10">Average Iteration Distance</option>
@@ -93,8 +88,8 @@
                 <input title="Adjusts the hue by rotating it on the color wheel" id="hueShiftSlider" type="range" min="0" step="0.01" max="360.00" value="0.00">
                 <input title="Adjusts the hue by rotating it on the color wheel" id="hueShiftBox" class="input-box" type="number" min="0.00" max="360.00" value="0">
 
-                <label title="Average subpixel samples over multiple frames to smooth out the image" id="aaLabel" for="aaToggle">Anti Aliasing</label>
-                <input title="Average subpixel samples over multiple frames to smooth out the image" id="aaToggle" type="checkbox">
+                <label title="Average subpixel samples over multiple frames to smooth out the image" id="antiAliasLabel" for="antiAliasToggle">Anti Aliasing</label>
+                <input title="Average subpixel samples over multiple frames to smooth out the image" id="antiAliasToggle" type="checkbox">
 
                 <label title="Ajust iteration count to make transition between iterations smoother (might break on non-mandelbrot fractals)" id="smoothLabel" for="smoothToggle">Smooth Coloring</label>
                 <input title="Ajust iteration count to make transition between iterations smoother (might break on non-mandelbrot fractals)" id="smoothToggle" type="checkbox">

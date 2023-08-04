@@ -30,7 +30,7 @@ const BRACKETS: {[open: string]: string} = {
     "|": "|"
 };
 
-class ParseError implements Error {
+export class ParseError implements Error {
     name: string;
     message: string;
 
@@ -51,7 +51,7 @@ class Token {
 }
 
 // Input TokenStream, procedurally tokenizes input string as needed
-class TokenStream {
+export class TokenStream {
     input: string;
     current: Token | null;
 
@@ -100,16 +100,16 @@ class TokenStream {
     }
 }
 
-type ParseNode = NumberNode | VariableNode | TwoOperatorNode | OneOperatorNode;
+export type ParseNode = NumberNode | VariableNode | TwoOperatorNode | OneOperatorNode;
 
-class NumberNode {
+export class NumberNode {
     value: string;
     constructor(value: string) {
         this.value = value;
     }
 }
 
-class VariableNode {
+export class VariableNode {
     value: string;
     userDefined: boolean;
     constructor(value: string, user: boolean) {
@@ -118,7 +118,7 @@ class VariableNode {
     }
 }
 
-class TwoOperatorNode {
+export class TwoOperatorNode {
     left: ParseNode;
     operator: string;
     right: ParseNode;
@@ -129,7 +129,7 @@ class TwoOperatorNode {
     } 
 }
 
-class OneOperatorNode {
+export class OneOperatorNode {
     operator: string;
     value: ParseNode;
     constructor(operator: string, value: ParseNode) {
@@ -139,35 +139,21 @@ class OneOperatorNode {
 }
 
 // Parses the current expression, and stores info related to it
-class Parser {
-    static current: Parser = new Parser(settings.equation);
+export class Parser {
+    private static userVars: Set<string>; // Set of user defined variables
 
-    private equation: string; // Equation to parse, use settings.equation for external equation
-    ast: ParseNode; // Parsed AST of current equation
-    userVars: Set<string>; // Set of user defined variables
-    success: boolean; // If the parser encountered no syntax errors
-    needsVars: boolean; // If there are variables in the current equation that the user has not defined
-    
-    constructor(equation: string) {
-        settings.equation = equation;
-        this.equation = equation;
+    static parse(equation: string): {type: "blank" | "success" | "error", ast?: ParseNode, error?: ParseError, userVars: Set<string>} {  
         this.userVars = new Set();
-        this.ast = new NumberNode("0");
-        this.success = false;
-        this.needsVars = false;
-    }
-
-    parse() {
-        // TODO: ABSTRACT ERROR BOX MANIPULATION
-
+        
         // Handle case when input is empty
-        if (this.equation === "") {
-            ERROR_BOX.innerHTML = "";
-            ERROR_BOX.style.display = "none";
-            return true;
+        if (equation === "") {
+            return {
+                type: "blank",
+                userVars: this.userVars
+            };
         }
 
-        let stream = new TokenStream(this.equation);
+        let stream = new TokenStream(equation);
         try {
             let ast = this.recursiveParse(stream, 0);
 
@@ -175,43 +161,23 @@ class Parser {
                 throw ast;
             }
 
-            this.ast = ast;
-            ERROR_BOX.innerHTML = "";
-            ERROR_BOX.style.display = "none";
-            this.success = true;
-            this.manageVariables();
-            Parser.current = this;
-            return true;
+            return {
+                type: "success",
+                ast: ast,
+                userVars: this.userVars
+            };
         } catch(error) {
             if(!(error instanceof ParseError)) { throw error; }
-            ERROR_BOX.innerHTML = error.name + ": " + error.message;
-            ERROR_BOX.style.display = "";
-            this.manageVariables();
-            Parser.current = this;
-            return false;
+            
+            return {
+                type: "error",
+                error: error,
+                userVars: this.userVars
+            };
         }
     }
 
-    // Handles displaying of variable errors, variable button UI, and determines if there are undefined variables
-    manageVariables() {
-        if (!this.success) {
-            SLIDER_BUTTON.classList.add("disabled");
-            return;
-        }
-        for (let val of this.userVars) {
-            if (!sidebarVars.has(val)) {
-                ERROR_BOX.innerHTML = `Variable Error: ${val} is not defined`;
-                ERROR_BOX.style.display = "";
-                SLIDER_BUTTON.classList.remove("disabled");
-                this.needsVars = true;
-                return;
-            }
-        }
-        SLIDER_BUTTON.classList.add("disabled");
-        this.needsVars = false;
-    }
-
-    recursiveParse(stream: TokenStream, precedence: number): ParseNode | ParseError {
+    static recursiveParse(stream: TokenStream, precedence: number): ParseNode | ParseError {
         let left = stream.next();
         
         // Check for end of input
@@ -370,7 +336,7 @@ class Parser {
     }
 
     // Parse a math group (parenthesis, brackets, or curly brackets)
-    parseGroup(stream: TokenStream, opening: Token | null): ParseNode | ParseError {
+    static parseGroup(stream: TokenStream, opening: Token | null): ParseNode | ParseError {
         if (opening === null) {
             opening = stream.next();
             if (opening === null) {
@@ -400,7 +366,7 @@ class Parser {
     }
 
     // Parse a latex group (un-escaped curly brackets)
-    parseLatexGroup(stream: TokenStream, checkOpening: boolean): ParseNode | ParseError {
+    static parseLatexGroup(stream: TokenStream, checkOpening: boolean): ParseNode | ParseError {
         if (checkOpening) {
             let opening = stream.next();
             if (opening === null) {
@@ -431,7 +397,7 @@ class Parser {
     }
 
     // Parse a function: \name()
-    parseFunction(stream: TokenStream, left: Token): ParseNode | ParseError {
+    static parseFunction(stream: TokenStream, left: Token): ParseNode | ParseError {
         if (left.value === "backslash") {
             throw new ParseError("Parsing Error", "Unexpected backslash");
         }

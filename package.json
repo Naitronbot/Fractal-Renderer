@@ -4,7 +4,9 @@
   "description": "A",
   "main": "",
   "scripts": {
-    "build": "tsc"
+    "build": "node esbuild.mjs build",
+    "watch": "node esbuild.mjs watch",
+    "build:dev": "node esbuild.mjs dev"
   },
   "repository": {
     "type": "git",
@@ -18,5 +20,8 @@
   "homepage": "https://github.com/Naitronbot/Fractal-Renderer#readme",
   "devDependencies": {
     "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "esbuild": "0.18.13"
   }
 }

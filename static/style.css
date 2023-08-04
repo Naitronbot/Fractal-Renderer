@@ -278,7 +278,7 @@ input[disabled] {
     grid-column: 1/1;
 }
 
-#coloringMode {
+#coloringDropdown {
     grid-column: 2/4;
 }
 
@@ -311,7 +311,7 @@ input[disabled] {
     width: 28px;
 }
 
-#smoothToggle, #juliaToggle, #aaToggle, #domainLightnessToggle {
+#smoothToggle, #juliaToggle, #antiAliasToggle, #domainLightnessToggle {
     justify-self: start;
     width: auto;
     grid-column: 2/4;
