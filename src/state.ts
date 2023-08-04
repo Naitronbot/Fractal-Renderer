@@ -123,7 +123,7 @@ function setParam(value: string, type: paramTypes, setting?: settingVals, userVa
 }
 
 export function getURL() {
-    RenderContext.current.setup(true);
+    RenderContext.setup(true);
     let base = window.location.href.split("?")[0];
     base += `?eq=${encodeURIComponent(pageState.settings.equation)}`;
     base += `&it=${pageState.settings.iterations}`;

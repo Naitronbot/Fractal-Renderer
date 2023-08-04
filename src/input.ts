@@ -36,5 +36,5 @@ function fieldEdit() {
     }
     manageVariables();
     pageState.settings.equation = MQ_FIELD.latex();
-    RenderContext.current.setup(false);
+    RenderContext.setup(false);
 }

@@ -70,23 +70,21 @@ class ShaderUniformContainer {
 }
 
 export class RenderContext {
-    static current: RenderContext;
-
-    gl: WebGL2RenderingContext;
+    static gl: WebGL2RenderingContext;
     
-    private shaderUniforms!: ShaderUniformContainer;
+    private static shaderUniforms: ShaderUniformContainer;
 
-    private textureProgram: WebGLProgram;
-    private canvasProgram: WebGLProgram;
-    private samplesLocation!: WebGLUniformLocation;
-    private offsetLocation!: WebGLUniformLocation;
-    private frameBuffers: WebGLFramebuffer[] = [];
+    private static textureProgram: WebGLProgram;
+    private static canvasProgram: WebGLProgram;
+    private static samplesLocation: WebGLUniformLocation;
+    private static offsetLocation: WebGLUniformLocation;
+    private static frameBuffers: WebGLFramebuffer[] = [];
 
-    private fragmentShader: WebGLShader | undefined;
+    private static fragmentShader: WebGLShader | undefined;
 
-    private textures: WebGLTexture[];
+    private static textures: WebGLTexture[];
 
-    private bufferIndex = 0;
+    private static bufferIndex = 0;
 
     static pxToMath(px: Point): Point {
         return new Point(2.0*px.x/UIElements.canvas.clientWidth*(pageState.viewport.width/pageState.viewport.height), 2.0*px.y/UIElements.canvas.clientHeight);
@@ -96,9 +94,7 @@ export class RenderContext {
         return new Point((2.0*px.x/UIElements.canvas.clientWidth - 1)*(pageState.viewport.width/pageState.viewport.height), 2.0*px.y/UIElements.canvas.clientHeight - 1);
     }
 
-    constructor() {
-        RenderContext.current = this;
-
+    static initialize() {
         // Create WebGL context
         const gl = UIElements.canvas.getContext("webgl2");
         if (gl === null) {
@@ -132,7 +128,7 @@ export class RenderContext {
         this.setup(true);
     }
 
-    setup(manual: boolean) {
+    static setup(manual: boolean) {
         if (expressionState.type !== "success" || needsVars) {
             return;
         }
@@ -205,7 +201,7 @@ export class RenderContext {
         requestAnimationFrame(RenderContext.draw);
     }
 
-    createTextures() {
+    static createTextures() {
         this.gl.deleteTexture(this.textures[0]);
         this.gl.deleteTexture(this.textures[1]);
         this.textures = [];
@@ -229,69 +225,69 @@ export class RenderContext {
 
     static draw() {
         // Ensure canvas is sized properly 
-        RenderContext.current.resize();
+        RenderContext.resize();
     
-        RenderContext.current.gl.bindFramebuffer(RenderContext.current.gl.FRAMEBUFFER, RenderContext.current.frameBuffers[0]);
-        RenderContext.current.gl.framebufferTexture2D(RenderContext.current.gl.FRAMEBUFFER, RenderContext.current.gl.COLOR_ATTACHMENT0, RenderContext.current.gl.TEXTURE_2D, RenderContext.current.textures[0], 0);
+        RenderContext.gl.bindFramebuffer(RenderContext.gl.FRAMEBUFFER, RenderContext.frameBuffers[0]);
+        RenderContext.gl.framebufferTexture2D(RenderContext.gl.FRAMEBUFFER, RenderContext.gl.COLOR_ATTACHMENT0, RenderContext.gl.TEXTURE_2D, RenderContext.textures[0], 0);
     
         // Set program to render to texture
-        RenderContext.current.gl.useProgram(RenderContext.current.textureProgram);
+        RenderContext.gl.useProgram(RenderContext.textureProgram);
     
         // Asign all uniforms
-        RenderContext.current.shaderUniforms.assignAll();
+        RenderContext.shaderUniforms.assignAll();
         pageState.settings.samples = 0;
     
         UIElements.coordDisplay.innerHTML = `Offset: ${pageState.settings.offset.pos.x} + ${pageState.settings.offset.pos.y}i\nZoom: 2<sup>${Math.round(pageState.settings.zoom.level * 1000) / 1000}</sup>`;
     
         if (pageState.settings.antiAlias) {
-            RenderContext.current.gl.bindFramebuffer(RenderContext.current.gl.FRAMEBUFFER, RenderContext.current.frameBuffers[1]);
-            RenderContext.current.gl.framebufferTexture2D(RenderContext.current.gl.FRAMEBUFFER, RenderContext.current.gl.COLOR_ATTACHMENT0, RenderContext.current.gl.TEXTURE_2D, RenderContext.current.textures[1], 0);
+            RenderContext.gl.bindFramebuffer(RenderContext.gl.FRAMEBUFFER, RenderContext.frameBuffers[1]);
+            RenderContext.gl.framebufferTexture2D(RenderContext.gl.FRAMEBUFFER, RenderContext.gl.COLOR_ATTACHMENT0, RenderContext.gl.TEXTURE_2D, RenderContext.textures[1], 0);
     
-            RenderContext.current.bufferIndex = 1;
+            RenderContext.bufferIndex = 1;
         } else {
-            RenderContext.current.bufferIndex = 1;
+            RenderContext.bufferIndex = 1;
             RenderContext.antiAliasLoop();
         }
     }
 
     static antiAliasLoop() {
-        RenderContext.current.bufferIndex = 1 - RenderContext.current.bufferIndex;
+        RenderContext.bufferIndex = 1 - RenderContext.bufferIndex;
     
-        RenderContext.current.gl.useProgram(RenderContext.current.textureProgram);
+        RenderContext.gl.useProgram(RenderContext.textureProgram);
     
         // Bind current buffer
-        RenderContext.current.gl.bindFramebuffer(RenderContext.current.gl.FRAMEBUFFER, RenderContext.current.frameBuffers[RenderContext.current.bufferIndex]);
+        RenderContext.gl.bindFramebuffer(RenderContext.gl.FRAMEBUFFER, RenderContext.frameBuffers[RenderContext.bufferIndex]);
     
         // Bind current texture
-        RenderContext.current.gl.bindTexture(RenderContext.current.gl.TEXTURE_2D, RenderContext.current.textures[1 - RenderContext.current.bufferIndex]);
+        RenderContext.gl.bindTexture(RenderContext.gl.TEXTURE_2D, RenderContext.textures[1 - RenderContext.bufferIndex]);
     
         // Update uniforms
         pageState.settings.samples++;
-        RenderContext.current.gl.uniform1i(RenderContext.current.samplesLocation, pageState.settings.samples);
+        RenderContext.gl.uniform1i(RenderContext.samplesLocation, pageState.settings.samples);
         if (pageState.settings.samples > 1) {
-            RenderContext.current.gl.uniform2f(RenderContext.current.offsetLocation, Math.random()-0.5, Math.random()-0.5);
+            RenderContext.gl.uniform2f(RenderContext.offsetLocation, Math.random()-0.5, Math.random()-0.5);
         } else {
-            RenderContext.current.gl.uniform2f(RenderContext.current.offsetLocation, 0, 0);
+            RenderContext.gl.uniform2f(RenderContext.offsetLocation, 0, 0);
         }
     
         // Render to texture
-        RenderContext.current.gl.viewport(0, 0, RenderContext.current.gl.canvas.width, RenderContext.current.gl.canvas.height);
-        RenderContext.current.gl.clearColor(0.0, 0.0, 0.0, 1.0);
-        RenderContext.current.gl.clear(RenderContext.current.gl.COLOR_BUFFER_BIT);
-        RenderContext.current.gl.drawArrays(RenderContext.current.gl.TRIANGLES, 0, 6);
+        RenderContext.gl.viewport(0, 0, RenderContext.gl.canvas.width, RenderContext.gl.canvas.height);
+        RenderContext.gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        RenderContext.gl.clear(RenderContext.gl.COLOR_BUFFER_BIT);
+        RenderContext.gl.drawArrays(RenderContext.gl.TRIANGLES, 0, 6);
     
         // Unbind framebuffer to render to canvas
-        RenderContext.current.gl.bindFramebuffer(RenderContext.current.gl.FRAMEBUFFER, null);
+        RenderContext.gl.bindFramebuffer(RenderContext.gl.FRAMEBUFFER, null);
     
         // Switch to canvas program
-        RenderContext.current.gl.useProgram(RenderContext.current.canvasProgram);
+        RenderContext.gl.useProgram(RenderContext.canvasProgram);
     
         // Render to canvas
-        RenderContext.current.gl.bindTexture(RenderContext.current.gl.TEXTURE_2D, RenderContext.current.textures[RenderContext.current.bufferIndex]);
-        RenderContext.current.gl.viewport(0, 0, RenderContext.current.gl.canvas.width, RenderContext.current.gl.canvas.height);
-        RenderContext.current.gl.clearColor(0.0, 0.0, 0.0, 1.0);
-        RenderContext.current.gl.clear(RenderContext.current.gl.COLOR_BUFFER_BIT);
-        RenderContext.current.gl.drawArrays(RenderContext.current.gl.TRIANGLES, 0, 6);
+        RenderContext.gl.bindTexture(RenderContext.gl.TEXTURE_2D, RenderContext.textures[RenderContext.bufferIndex]);
+        RenderContext.gl.viewport(0, 0, RenderContext.gl.canvas.width, RenderContext.gl.canvas.height);
+        RenderContext.gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        RenderContext.gl.clear(RenderContext.gl.COLOR_BUFFER_BIT);
+        RenderContext.gl.drawArrays(RenderContext.gl.TRIANGLES, 0, 6);
     
         if (pageState.settings.screenshot) {
             pageState.settings.screenshot = false;
@@ -303,7 +299,7 @@ export class RenderContext {
         }
     }
     
-    resize() {
+    static resize() {
         let prevHeight = UIElements.canvas.height;
         let prevWidth = UIElements.canvas.width;
         if (document.fullscreenElement || (document as any).mozFullScreenElement || (document as any).webkitFullscreenElement) {
@@ -323,7 +319,7 @@ export class RenderContext {
         }
     }
     
-    createVertex() {
+    static createVertex() {
         let raw = getVertex();
         let shader = this.gl.createShader(this.gl.VERTEX_SHADER)!;
         this.gl.shaderSource(shader, raw);
@@ -337,7 +333,7 @@ export class RenderContext {
         this.gl.deleteShader(shader);
     }
     
-    createFragment() {
+    static createFragment() {
         let raw = getFragment();
         let shader = this.gl.createShader(this.gl.FRAGMENT_SHADER)!;
         this.gl.shaderSource(shader, raw);
@@ -351,7 +347,7 @@ export class RenderContext {
         this.gl.deleteShader(shader);
     }
     
-    createCanvasShader() {
+    static createCanvasShader() {
         let raw = getCanvasShader();
         let shader = this.gl.createShader(this.gl.FRAGMENT_SHADER)!;
         this.gl.shaderSource(shader, raw);

@@ -101,7 +101,7 @@ export class Slider {
         for (let val of expressionState.userVars) {
             if (!sidebarVars.has(val)) {
                 manageVariables();
-                RenderContext.current.setup(true);
+                RenderContext.setup(true);
                 break;
             }
         }
@@ -129,7 +129,7 @@ export function updateSidebar() {
         }
     }
     manageVariables();
-    RenderContext.current.setup(true);
+    RenderContext.setup(true);
     UIElements.errorBox.hide();
 }
 

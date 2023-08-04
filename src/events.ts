@@ -4,7 +4,7 @@ import { pageState } from "state";
 import { UIElements } from "ui";
 
 window.addEventListener("resize", () => {
-    RenderContext.current.resize();
+    RenderContext.resize();
     UIElements.fixGrid();
     requestAnimationFrame(RenderContext.draw);
 });

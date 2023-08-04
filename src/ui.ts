@@ -103,7 +103,7 @@ const buttons = [
     {
         id: "manualRecomp",
         event: () => {
-            RenderContext.current.setup(true);
+            RenderContext.setup(true);
         }
     }
 ] as const;
