@@ -228,15 +228,20 @@ export const UIElements = {
     hasSidebar: true,
     errorBox: errorBox,
 
-    setDefaults() {
-        for (const sliderName of sliders) {
-            let current = pageState.settings[sliderName.id] + "";
-            this[sliderName.id].setVal(current);
+    updateAll() {
+        for (const currentDropdown of dropdowns) {
+            let current = pageState.settings[currentDropdown.id];
+            this[currentDropdown.id].dropdown.value = current + "";
         }
 
-        for (const toggleName of toggles) {
-            let current = pageState.settings[toggleName.id];
-            this[toggleName.id].checkbox.checked = current;
+        for (const currentSlider of sliders) {
+            let current = pageState.settings[currentSlider.id] + "";
+            this[currentSlider.id].setVal(current);
+        }
+
+        for (const currentToggle of toggles) {
+            let current = pageState.settings[currentToggle.id];
+            this[currentToggle.id].checkbox.checked = current;
         }
     },
 
@@ -291,7 +296,7 @@ export const UIElements = {
 & {[key in typeof sliders[number]['id']]: UISlider}
 & {[key in typeof toggles[number]['id']]: UIToggle}
 & {[key in typeof additionalUI[number]]: HTMLElement}
-& {setDefaults(): void, toggleColoringActive(): void, fixGrid(): void, canvas: HTMLCanvasElement, hasSidebar: boolean, errorBox: typeof errorBox};
+& {updateAll(): void, toggleColoringActive(): void, fixGrid(): void, canvas: HTMLCanvasElement, hasSidebar: boolean, errorBox: typeof errorBox};
 
 for (const currentButton of buttons) {
     const currentId = currentButton.id + "Button" as `${typeof buttons[number]['id']}Button`;

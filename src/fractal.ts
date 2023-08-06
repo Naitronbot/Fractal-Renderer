@@ -9,7 +9,7 @@ import 'debug';
 loadQueryParams();
 
 // Update UI to match loaded query params
-UIElements.setDefaults();
+UIElements.updateAll();
 UIElements.toggleColoringActive();
 
 // Initialize Rendering context
