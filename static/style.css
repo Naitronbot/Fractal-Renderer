@@ -100,7 +100,7 @@ p,input,label,button,select {
     cursor: default;
 }
 
-#webGLCanvas {
+#canvas {
     margin: 0;
     width: 100%;
     height: 100%;
