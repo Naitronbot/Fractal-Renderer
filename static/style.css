@@ -34,7 +34,7 @@ p,input,label,button,select {
     overflow-y: auto;
 }
 
-#sidebar p {
+#sidebar p, #sidebar label {
     color: white;
     margin: 0;
 }

@@ -3,11 +3,11 @@ import { expressionState, pageState } from "state";
 import { getFragment, recursiveDecompose } from "shaders";
 
 window.logLatex = () => {
-    console.log(pageState.settings.equation);
+    console.log(pageState.equation);
 }
 
 window.logTokens = () => {
-    let tokenStream = new TokenStream(pageState.settings.equation);
+    let tokenStream = new TokenStream(pageState.equation);
     let tokens = [];
     while (tokenStream.hasNext()) {
         let next = tokenStream.next();

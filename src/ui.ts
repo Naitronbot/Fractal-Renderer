@@ -1,4 +1,4 @@
-import { getURL, pageState } from "state";
+import { addUndoQueue, getURL, pageState } from "state";
 import { RenderContext } from "render";
 import { updateSidebar } from "sliders";
 
@@ -44,18 +44,19 @@ const buttons = [
     {
         id: "reset",
         event: () => {
-            pageState.settings.zoom.level = 0;
-            pageState.settings.zoom.log = 1;
-            pageState.settings.offset.pos.x = 0;
-            pageState.settings.offset.pos.y = 0;
+            pageState.zoom.level = 0;
+            pageState.zoom.log = 1;
+            pageState.offset.pos.x = 0;
+            pageState.offset.pos.y = 0;
             requestAnimationFrame(RenderContext.draw);
+            addUndoQueue();
         }
     },
     {
         id: "download",
         event: () => {
-            if(pageState.settings.antiAlias) {
-                pageState.settings.screenshot = true
+            if(pageState.antiAlias) {
+                pageState.screenshot = true
             } else {
                 RenderContext.downloadCanvas();
             }
@@ -160,7 +161,7 @@ const toggles = [
         id: "antiAlias",
         beforeDraw: () => {},
         afterDraw: () => {
-            if (pageState.settings.antiAlias) {
+            if (pageState.antiAlias) {
                 requestAnimationFrame(RenderContext.antiAliasLoop);
             }
         }
@@ -174,7 +175,7 @@ const toggles = [
         id: "manualRecomp",
         beforeDraw: () => {},
         afterDraw: () => {
-            if (pageState.settings.manualRecomp) {
+            if (pageState.manualRecomp) {
                 UIElements.manualRecompButton.style.display = "";
             } else {
                 UIElements.manualRecompButton.style.display = "none";
@@ -184,11 +185,11 @@ const toggles = [
     {
         id: "fad",
         beforeDraw: () => {
-            if (pageState.settings.fad) {
-                pageState.settings.fad = true;
+            if (pageState.fad) {
+                pageState.fad = true;
             } else {
-                pageState.settings.offset.angle = 0;
-                pageState.settings.fad = false;
+                pageState.offset.angle = 0;
+                pageState.fad = false;
             }
         },
         afterDraw: () => {}
@@ -230,23 +231,23 @@ export const UIElements = {
 
     updateAll() {
         for (const currentDropdown of dropdowns) {
-            let current = pageState.settings[currentDropdown.id];
+            let current = pageState[currentDropdown.id];
             this[currentDropdown.id].dropdown.value = current + "";
         }
 
         for (const currentSlider of sliders) {
-            let current = pageState.settings[currentSlider.id] + "";
+            let current = pageState[currentSlider.id] + "";
             this[currentSlider.id].setVal(current);
         }
 
         for (const currentToggle of toggles) {
-            let current = pageState.settings[currentToggle.id];
+            let current = pageState[currentToggle.id];
             this[currentToggle.id].checkbox.checked = current;
         }
     },
 
     toggleColoringActive() {
-        if (pageState.settings.coloring === 2) {
+        if (pageState.coloring === 2) {
             this.breakout.setActive(false);
             this.bias.hide(true);
             this.domain.hide(false);
@@ -321,11 +322,13 @@ for (const currentDropdown of dropdowns) {
     }
 
     UIElements[currentDropdown.id].dropdown.addEventListener("change", () => {
-        pageState.settings[currentDropdown.id] = parseInt(UIElements[currentDropdown.id].dropdown.value);
+        pageState[currentDropdown.id] = parseInt(UIElements[currentDropdown.id].dropdown.value);
         currentDropdown.beforeDraw();
         requestAnimationFrame(RenderContext.draw);
         currentDropdown.afterDraw();
     });
+
+    UIElements[currentDropdown.id].dropdown.addEventListener("change", addUndoQueue);
 }
 
 for (const currentSlider of sliders) {
@@ -371,7 +374,7 @@ for (const currentSlider of sliders) {
         UIElements[currentSlider.id].input.value = UIElements[currentSlider.id].slider.value;
         let num = parseNum(UIElements[currentSlider.id].input.value);
         if (!isNaN(num)) {
-            pageState.settings[currentSlider.id] = num;
+            pageState[currentSlider.id] = num;
         }
         currentSlider.beforeDraw();
         requestAnimationFrame(RenderContext.draw);
@@ -382,12 +385,15 @@ for (const currentSlider of sliders) {
         let num = parseNum(UIElements[currentSlider.id].input.value);
         if (!isNaN(num)) {
             UIElements[currentSlider.id].slider.value = num + "";
-            pageState.settings[currentSlider.id] = num;
+            pageState[currentSlider.id] = num;
         }
         currentSlider.beforeDraw();
         requestAnimationFrame(RenderContext.draw);
         currentSlider.afterDraw();
     });
+
+    UIElements[currentSlider.id].slider.addEventListener("change", addUndoQueue);
+    UIElements[currentSlider.id].input.addEventListener("change", addUndoQueue);
 }
 
 for (const currentToggle of toggles) {
@@ -418,10 +424,11 @@ for (const currentToggle of toggles) {
     } as UIToggle;
 
     UIElements[currentToggle.id].checkbox.addEventListener("change", () => {
-        pageState.settings[currentToggle.id] = UIElements[currentToggle.id].checkbox.checked;
+        pageState[currentToggle.id] = UIElements[currentToggle.id].checkbox.checked;
         currentToggle.beforeDraw();
         requestAnimationFrame(RenderContext.draw);
         currentToggle.afterDraw();
+        addUndoQueue();
     });
 }
 

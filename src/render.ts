@@ -1,6 +1,6 @@
 import { getCanvasShader, getFragment, getVertex } from "shaders";
 import { UIElements } from "ui";
-import { expressionState, pageState } from "state";
+import { expressionState, pageState, viewportState } from "state";
 import { Point } from "shared";
 import { needsVars, sidebarVals } from "sliders";
 
@@ -87,11 +87,11 @@ export class RenderContext {
     private static bufferIndex = 0;
 
     static pxToMath(px: Point): Point {
-        return new Point(2.0*px.x/UIElements.canvas.clientWidth*(pageState.viewport.width/pageState.viewport.height), 2.0*px.y/UIElements.canvas.clientHeight);
+        return new Point(2.0*px.x/UIElements.canvas.clientWidth*(viewportState.width/viewportState.height), 2.0*px.y/UIElements.canvas.clientHeight);
     }
     
     static pxToCanvas(px: Point): Point {
-        return new Point((2.0*px.x/UIElements.canvas.clientWidth - 1)*(pageState.viewport.width/pageState.viewport.height), 2.0*px.y/UIElements.canvas.clientHeight - 1);
+        return new Point((2.0*px.x/UIElements.canvas.clientWidth - 1)*(viewportState.width/viewportState.height), 2.0*px.y/UIElements.canvas.clientHeight - 1);
     }
 
     static initialize() {
@@ -133,7 +133,7 @@ export class RenderContext {
             return;
         }
     
-        if (pageState.settings.manualRecomp && !manual) {
+        if (pageState.manualRecomp && !manual) {
             return;
         }
     
@@ -160,16 +160,16 @@ export class RenderContext {
             return;
         }
         this.shaderUniforms = new ShaderUniformContainer(this.gl, this.textureProgram);
-        this.shaderUniforms.add("u_transform", ()=>[pageState.settings.offset.pos.x, pageState.settings.offset.pos.y, pageState.settings.zoom.log], UniformTypes.FLOAT);
-        this.shaderUniforms.add("u_iterations", ()=>[pageState.settings.iterations], UniformTypes.INT);
-        this.shaderUniforms.add("u_breakout", ()=>[pageState.settings.breakout], UniformTypes.FLOAT);
-        this.shaderUniforms.add("u_bias", ()=>[pageState.settings.bias], UniformTypes.FLOAT);
-        this.shaderUniforms.add("u_domain", ()=>[pageState.settings.domain - 1], UniformTypes.INT);
-        this.shaderUniforms.add("u_hueShift", ()=>[pageState.settings.hueShift], UniformTypes.FLOAT);
-        this.shaderUniforms.add("u_toggles", ()=>[+pageState.settings.julia + 2*+pageState.settings.smooth + 4*+pageState.settings.domainLightness], UniformTypes.INT);
-        this.shaderUniforms.add("u_resolution", ()=>[pageState.viewport.width, pageState.viewport.height], UniformTypes.FLOAT);
-        this.shaderUniforms.add("u_color", ()=>[pageState.settings.coloring], UniformTypes.INT);
-        this.shaderUniforms.add("u_angle", ()=>[pageState.settings.offset.angle], UniformTypes.FLOAT);
+        this.shaderUniforms.add("u_transform", ()=>[pageState.offset.pos.x, pageState.offset.pos.y, pageState.zoom.log], UniformTypes.FLOAT);
+        this.shaderUniforms.add("u_iterations", ()=>[pageState.iterations], UniformTypes.INT);
+        this.shaderUniforms.add("u_breakout", ()=>[pageState.breakout], UniformTypes.FLOAT);
+        this.shaderUniforms.add("u_bias", ()=>[pageState.bias], UniformTypes.FLOAT);
+        this.shaderUniforms.add("u_domain", ()=>[pageState.domain - 1], UniformTypes.INT);
+        this.shaderUniforms.add("u_hueShift", ()=>[pageState.hueShift], UniformTypes.FLOAT);
+        this.shaderUniforms.add("u_toggles", ()=>[+pageState.julia + 2*+pageState.smooth + 4*+pageState.domainLightness], UniformTypes.INT);
+        this.shaderUniforms.add("u_resolution", ()=>[viewportState.width, viewportState.height], UniformTypes.FLOAT);
+        this.shaderUniforms.add("u_color", ()=>[pageState.coloring], UniformTypes.INT);
+        this.shaderUniforms.add("u_angle", ()=>[pageState.offset.angle], UniformTypes.FLOAT);
         for (let userVar of expressionState.userVars) {
             this.shaderUniforms.add("u_" + userVar, ()=>[sidebarVals[userVar], 0], UniformTypes.FLOAT);
         }
@@ -235,11 +235,11 @@ export class RenderContext {
     
         // Asign all uniforms
         RenderContext.shaderUniforms.assignAll();
-        pageState.settings.samples = 0;
+        pageState.samples = 0;
     
-        UIElements.coordDisplay.innerHTML = `Offset: ${pageState.settings.offset.pos.x} + ${pageState.settings.offset.pos.y}i\nZoom: 2<sup>${Math.round(pageState.settings.zoom.level * 1000) / 1000}</sup>`;
+        UIElements.coordDisplay.innerHTML = `Offset: ${pageState.offset.pos.x} + ${pageState.offset.pos.y}i\nZoom: 2<sup>${Math.round(pageState.zoom.level * 1000) / 1000}</sup>`;
     
-        if (pageState.settings.antiAlias) {
+        if (pageState.antiAlias) {
             RenderContext.gl.bindFramebuffer(RenderContext.gl.FRAMEBUFFER, RenderContext.frameBuffers[1]);
             RenderContext.gl.framebufferTexture2D(RenderContext.gl.FRAMEBUFFER, RenderContext.gl.COLOR_ATTACHMENT0, RenderContext.gl.TEXTURE_2D, RenderContext.textures[1], 0);
     
@@ -262,9 +262,9 @@ export class RenderContext {
         RenderContext.gl.bindTexture(RenderContext.gl.TEXTURE_2D, RenderContext.textures[1 - RenderContext.bufferIndex]);
     
         // Update uniforms
-        pageState.settings.samples++;
-        RenderContext.gl.uniform1i(RenderContext.samplesLocation, pageState.settings.samples);
-        if (pageState.settings.samples > 1) {
+        pageState.samples++;
+        RenderContext.gl.uniform1i(RenderContext.samplesLocation, pageState.samples);
+        if (pageState.samples > 1) {
             RenderContext.gl.uniform2f(RenderContext.offsetLocation, Math.random()-0.5, Math.random()-0.5);
         } else {
             RenderContext.gl.uniform2f(RenderContext.offsetLocation, 0, 0);
@@ -289,12 +289,12 @@ export class RenderContext {
         RenderContext.gl.clear(RenderContext.gl.COLOR_BUFFER_BIT);
         RenderContext.gl.drawArrays(RenderContext.gl.TRIANGLES, 0, 6);
     
-        if (pageState.settings.screenshot) {
-            pageState.settings.screenshot = false;
+        if (pageState.screenshot) {
+            pageState.screenshot = false;
             RenderContext.downloadCanvas();
         }
     
-        if (pageState.settings.antiAlias) {
+        if (pageState.antiAlias) {
             requestAnimationFrame(RenderContext.antiAliasLoop);
         }
     }
@@ -305,13 +305,13 @@ export class RenderContext {
         if (document.fullscreenElement || (document as any).mozFullScreenElement || (document as any).webkitFullscreenElement) {
             UIElements.canvas.width = screen.width;
             UIElements.canvas.height = screen.height;
-            pageState.viewport.width = screen.width;
-            pageState.viewport.height = screen.height;
+            viewportState.width = screen.width;
+            viewportState.height = screen.height;
         } else {
             UIElements.canvas.height = UIElements.canvasWrapper.clientHeight * devicePixelRatio;
             UIElements.canvas.width = UIElements.canvasWrapper.clientWidth * devicePixelRatio;
-            pageState.viewport.width = UIElements.canvasWrapper.clientWidth * devicePixelRatio;
-            pageState.viewport.height = UIElements.canvasWrapper.clientHeight * devicePixelRatio;
+            viewportState.width = UIElements.canvasWrapper.clientWidth * devicePixelRatio;
+            viewportState.height = UIElements.canvasWrapper.clientHeight * devicePixelRatio;
         }
     
         if (UIElements.canvas.height != prevHeight || UIElements.canvas.width != prevWidth) {
@@ -362,7 +362,7 @@ export class RenderContext {
     }
 
     static downloadCanvas() {
-        if (!pageState.settings.antiAlias) {
+        if (!pageState.antiAlias) {
             RenderContext.draw();
         }
         UIElements.canvas.toBlob((blob) => {
