@@ -189,7 +189,7 @@ export function getFragment(): string {
                 return vec2(1.0,0.0);
             }
             if (z2.x < 0.0) {
-                float infinity = 1.0/0.0;
+                float infinity = 1.0/max(z2.x, 0.0);
                 return vec2(infinity, infinity);
             }
             return vec2(0.0, 0.0);
