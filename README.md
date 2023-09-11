@@ -1,7 +1,7 @@
 # Fractal Renderer
 
 ## Description
-A WebGL application for rendering a fractal based on an inputted equation. Has many different tweakable parameters and coloring modes.
+Fractal Renderer is a WebGL application for rendering a fractal based on an inputted equation. It has many different tweakable parameters and coloring modes.
 
 ## Live Demo
 See live demo at [naitronbomb.com](https://www.naitronbomb.com/fractal/)
