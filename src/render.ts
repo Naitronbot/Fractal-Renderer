@@ -2,7 +2,7 @@ import { getCanvasShader, getFragment, getVertex } from "shaders";
 import { UIElements } from "ui";
 import { expressionState, pageState, viewportState } from "state";
 import { Point } from "shared";
-import { needsVars, sidebarVals } from "sliders";
+import { needsVars } from "sliders";
 
 // Structure for setting, binding, and updating shader uniforms
 const enum UniformTypes {FLOAT, INT};
@@ -171,7 +171,7 @@ export class RenderContext {
         this.shaderUniforms.add("u_color", ()=>[pageState.coloring], UniformTypes.INT);
         this.shaderUniforms.add("u_angle", ()=>[pageState.offset.angle], UniformTypes.FLOAT);
         for (let userVar of expressionState.userVars) {
-            this.shaderUniforms.add("u_" + userVar, ()=>[sidebarVals[userVar], 0], UniformTypes.FLOAT);
+            this.shaderUniforms.add("u_" + userVar, ()=>[pageState.sliders[userVar].val, 0], UniformTypes.FLOAT);
         }
     
         this.samplesLocation = this.gl.getUniformLocation(this.textureProgram, "u_samples")!;

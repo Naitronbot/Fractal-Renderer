@@ -1,8 +1,8 @@
-import { SliderComponent } from "sliders";
+import { SliderComponent, Slider } from "sliders";
 import { Point } from "shared";
 import { UIElements } from "ui";
 import { RenderContext } from "render";
-import { ParseError, ParseNode } from "parser";
+import { ParseError, ParseNode, Parser } from "parser";
 import { UndoRedoQueue } from "undo";
 import { MQ_FIELD } from "input";
 
@@ -32,9 +32,9 @@ export let pageState = {
         pos: new Point(0,0),
         angle: 0
     },
-    sliders: []
+    sliders: {} as {[key: string]: Slider}
 };
-window.pageState = pageState;
+Object.defineProperty(window, "pageState", {get() {return pageState}});
 
 const pageStateQueue = new UndoRedoQueue<typeof pageState>(100);
 
@@ -48,20 +48,32 @@ export function addUndoQueue() {
 }
 
 export function undo() {
-    let newState = pageStateQueue.undo();
+    const oldEq = pageState.equation;
+    const newState = pageStateQueue.undo();
     if (newState) {
         pageState = newState;
         UIElements.updateAll();
+    }
+    if (oldEq !== pageState.equation) {
+        let parsed = Parser.parse(pageState.equation);
+        setExpressionState(parsed);
+        RenderContext.setup(true);
     }
     requestAnimationFrame(RenderContext.draw);
     MQ_FIELD.latex(pageState.equation);
 };
 
 export function redo() {
-    let newState = pageStateQueue.redo();
+    const oldEq = pageState.equation;
+    const newState = pageStateQueue.redo();
     if (newState) {
         pageState = newState;
         UIElements.updateAll();
+    }
+    if (oldEq !== pageState.equation) {
+        let parsed = Parser.parse(pageState.equation);
+        setExpressionState(parsed);
+        RenderContext.setup(true);
     }
     requestAnimationFrame(RenderContext.draw);
     MQ_FIELD.latex(pageState.equation);
@@ -167,14 +179,9 @@ export function getURL() {
     base += `&px=${pageState.offset.pos.x}`;
     base += `&py=${pageState.offset.pos.y}`;
     base += `&zm=${pageState.zoom.level}`;
-    for (let slider of UIElements.sidebar.getElementsByClassName("slider-wrapper")) {
-        let inputs = slider.getElementsByClassName("input-box");
-        let nameInput = slider.getElementsByTagName("p")[0] as HTMLElement;
-        let valueInput = inputs[0] as HTMLInputElement;
-        let minInput = inputs[1] as HTMLInputElement;
-        let maxInput = inputs[2] as HTMLInputElement;
-        let stepInput = inputs[3] as HTMLInputElement;
-        base += `&uv${nameInput.innerHTML}=${valueInput.value}%2F${minInput.value}%2F${maxInput.value}%2F${stepInput.value}`;
+    for (let key in pageState.sliders) {
+        const slider = pageState.sliders[key]; 
+        base += `&uv${key}=${slider.val}%2F${slider.min}%2F${slider.max}%2F${slider.step}`;
     }
     return base;
 }

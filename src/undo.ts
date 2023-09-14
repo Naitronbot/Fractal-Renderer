@@ -13,17 +13,7 @@ export class UndoRedoQueue<T> {
         this.index = size-1;
     }
 
-    debugPrint() {
-        // let test = "";
-        // for (const i of this.queue) {
-        //     test += (i as any).equation + ", ";
-        // }
-        // console.log(test, this.index);
-    }
-
     add(item: T) {
-        this.debugPrint();
-
         this.index = (this.index+1)%this.maxSize;
         this.queue[this.index] = item;
 
@@ -31,13 +21,9 @@ export class UndoRedoQueue<T> {
             this.amtBehind++;
         }
         this.amtFront = 0;
-
-        this.debugPrint();
     }
 
     undo() {
-        this.debugPrint();
-
         if (this.amtBehind === 0) {
             return null;
         }
@@ -49,14 +35,10 @@ export class UndoRedoQueue<T> {
         this.amtBehind--;
         this.amtFront++;
 
-        this.debugPrint();
-
         return clone(this.queue[this.index]);
     }
 
     redo() {
-        this.debugPrint();
-
         if (this.amtFront === 0) {
             return null;
         }
@@ -67,8 +49,6 @@ export class UndoRedoQueue<T> {
 
         this.amtBehind++;
         this.amtFront--;
-
-        this.debugPrint();
 
         return current;
     }

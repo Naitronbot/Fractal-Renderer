@@ -1,17 +1,41 @@
 import { RenderContext } from "render";
 import { addUndoQueue, expressionState } from "state";
 import { UIElements } from "ui";
+import { pageState } from "state";
 
 export const sidebarVars: Set<string> = new Set();
-export const sidebarVals: {[key: string]: number} = {};
+
+export class Slider {
+    val: number;
+    min: number;
+    max: number;
+    step: number;
+    
+    constructor(val: string, min: string, max: string, step: string) {
+        this.val = parseFloat(val);
+        this.min = parseFloat(min);
+        this.max = parseFloat(max);
+        this.step = parseFloat(step);
+    }
+
+    update(val: string, min: string, max: string, step: string) {
+        this.val = parseFloat(val);
+        this.min = parseFloat(min);
+        this.max = parseFloat(max);
+        this.step = parseFloat(step);
+    }
+}
 
 export class SliderComponent {
     varName: string;
     element: HTMLDivElement;
     sliderElem: HTMLInputElement;
     inputElem: HTMLInputElement;
+    minElem: HTMLInputElement;
+    maxElem: HTMLInputElement;
+    stepElem: HTMLInputElement;
 
-    constructor(varName: string, value?: string, min?: string, max?: string, step?: string) {
+    constructor(varName: string, value: string, min: string, max: string, step: string) {
         this.varName = varName;
         sidebarVars.add(varName);
 
@@ -30,21 +54,21 @@ export class SliderComponent {
 
         // Create slider
         this.sliderElem = document.createElement("input");
-        this.sliderElem.addEventListener('input', () => this.update(this.sliderElem.value, true));
+        this.sliderElem.addEventListener('input', () => this.update(this.sliderElem.value, this.minElem.value, this.maxElem.value, this.stepElem.value, true));
         this.sliderElem.addEventListener('change', addUndoQueue);
         this.sliderElem.type = "range";
-        this.sliderElem.min = min || "-10";
-        this.sliderElem.max = max || "10";
-        this.sliderElem.step = step || "0.01";
+        this.sliderElem.min = min + "";
+        this.sliderElem.max = max + "";
+        this.sliderElem.step = step + "";
         sliderDiv.append(this.sliderElem);
 
         // Create input box
         this.inputElem = document.createElement("input");
-        this.inputElem.addEventListener('input', () => this.update(this.inputElem.value, false));
+        this.inputElem.addEventListener('input', () => this.update(this.inputElem.value, this.minElem.value, this.maxElem.value, this.stepElem.value, false));
         this.inputElem.addEventListener('change', addUndoQueue);
         this.inputElem.classList.add("input-box");
         this.inputElem.type = "number";
-        this.inputElem.step = step || "0.01";
+        this.inputElem.step = step + "";
         sliderDiv.append(this.inputElem);
 
         // Create div to house min, max, and step size inputs
@@ -73,22 +97,22 @@ export class SliderComponent {
         }
 
         // Create min input box
-        const minInput = createInput("min", min || "-10", value => this.sliderElem.min = value);
-        addText("Min: ", minInput);
-        boundsDiv.append(minInput);
+        this.minElem = createInput("min", min + "", value => this.sliderElem.min = value);
+        addText("Min: ", this.minElem);
+        boundsDiv.append(this.minElem);
 
         // Create max input box
-        const maxInput = createInput("max", max || "10", value => this.sliderElem.max = value);
-        addText("Max: ", maxInput);
-        boundsDiv.append(maxInput);
+        this.maxElem = createInput("max", max + "", value => this.sliderElem.max = value);
+        addText("Max: ", this.maxElem);
+        boundsDiv.append(this.maxElem);
 
         // Create step input box
-        const stepInput = createInput("step", step || "0.01", value => {
+        this.stepElem = createInput("step", step + "", value => {
             this.sliderElem.step = value;
             this.inputElem.step = value;
         });
-        addText("Step: ", stepInput);
-        boundsDiv.append(stepInput);
+        addText("Step: ", this.stepElem);
+        boundsDiv.append(this.stepElem);
 
         // Create x button
         const closeButton = document.createElement("button");
@@ -97,27 +121,39 @@ export class SliderComponent {
         this.element.append(closeButton);
 
         // Set default value
-        this.update(value || "1", true);
+        this.update(value, min, max, step, true);
 
         // Add to DOM
         UIElements.sidebar.append(this.element);
     }
 
-    update(val: string, slider: boolean) {
-        sidebarVals[this.varName] = parseFloat(val);
-        this.sliderElem.value = val;
-        if (slider) {
-            this.inputElem.value = val;
+    update(value: string, min: string, max: string, step: string, updateInput: boolean) {
+        if (pageState.sliders[this.varName]) {
+            pageState.sliders[this.varName].update(value, min, max, step);
+        } else {
+            pageState.sliders[this.varName] = new Slider(value, min, max, step);
         }
+        this.sync(updateInput);
         if (expressionState.userVars.has(this.varName)) {
             requestAnimationFrame(RenderContext.draw);
         }
     }
 
+    sync(updateInput: boolean) {
+        const currentSlider = pageState.sliders[this.varName];
+        this.sliderElem.value = currentSlider.val + "";
+        if (updateInput) {
+            this.inputElem.value = currentSlider.val + "";
+        }
+        this.minElem.value = currentSlider.min + "";
+        this.maxElem.value = currentSlider.max + "";
+        this.stepElem.value = currentSlider.step + "";
+    }
+
     delete() {
         this.element.remove();
         sidebarVars.delete(this.varName);
-        delete sidebarVals[this.varName];
+        delete pageState.sliders[this.varName];
         for (let val of expressionState.userVars) {
             if (!sidebarVars.has(val)) {
                 manageVariables();
@@ -145,7 +181,7 @@ export function updateSidebar() {
     });
     if (newVars.length > 0) {
         for (let val of newVars) {
-            new SliderComponent(val);
+            new SliderComponent(val, "1", "-10", "10", "0.01");
         }
     }
     manageVariables();
