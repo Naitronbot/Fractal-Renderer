@@ -102,7 +102,7 @@ export function getFragment(): string {
             col = vec3(chroma,0.0,x);
         }
         
-        vec3 m = vec3(colorHSL.z-chroma/2.0);
+        vec3 m = max(vec3(colorHSL.z-chroma/2.0),0.0);
         
         return vec3(col+m);
     }
