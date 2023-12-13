@@ -71,6 +71,8 @@ class ShaderUniformContainer {
 
 export class RenderContext {
     static gl: WebGL2RenderingContext;
+
+    private static supportsFloatBuffers: boolean;
     
     private static shaderUniforms: ShaderUniformContainer;
 
@@ -103,6 +105,9 @@ export class RenderContext {
         } else {
             this.gl = gl;
         }
+
+        // Enable rendering to float textures
+        this.supportsFloatBuffers = gl.getExtension( 'OES_texture_float_linear') != null && gl.getExtension( 'EXT_color_buffer_float') != null;
 
         // Create programs
         const textureProgram = this.gl.createProgram();
@@ -208,7 +213,11 @@ export class RenderContext {
     
         this.textures.push(this.gl.createTexture()!);
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.textures[0]);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.canvas.width, this.gl.canvas.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+        if (this.supportsFloatBuffers) {
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA32F, this.gl.canvas.width, this.gl.canvas.height, 0, this.gl.RGBA, this.gl.FLOAT, null);
+        } else {
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.canvas.width, this.gl.canvas.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+        }
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
@@ -216,7 +225,11 @@ export class RenderContext {
     
         this.textures.push(this.gl.createTexture()!);
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.textures[1]);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.canvas.width, this.gl.canvas.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+        if (this.supportsFloatBuffers) {
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA32F, this.gl.canvas.width, this.gl.canvas.height, 0, this.gl.RGBA, this.gl.FLOAT, null);
+        } else {
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.canvas.width, this.gl.canvas.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+        }
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
