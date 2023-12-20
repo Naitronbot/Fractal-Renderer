@@ -1,0 +1,32 @@
+main {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(15rem, 1fr) 4fr;
+  grid-template-rows: 2fr 1fr;
+  grid-template-areas:
+    "sidebar fractal"
+    "sidebar settings";
+}
+
+main.mobile {
+  grid-template-rows: 3fr 2fr;
+  grid-template-areas:
+    "fractal fractal"
+    "settings settings";
+}
+
+#sidebar {
+  background-color: red;
+  grid-area: sidebar;
+}
+
+#fractalWindow {
+  background-color: green;
+  grid-area: fractal;
+}
+
+#fractalSettings {
+  background-color: blue;
+  grid-area: settings;
+}
