@@ -3,7 +3,7 @@ main {
   height: 100%;
   display: grid;
   grid-template-columns: minmax(15rem, 1fr) 4fr;
-  grid-template-rows: 2fr 1fr;
+  grid-template-rows: 3fr 1fr;
   grid-template-areas:
     "sidebar fractal"
     "sidebar settings";
