@@ -5,7 +5,7 @@ import { RenderContext } from "render";
 import { manageVariables, updateSidebar } from "sliders";
 
 declare const MathQuill: any;
-const MQ = MathQuill.getInterface(2);
+const MQ = MathQuill.getInterface(3);
 const MQ_FIELD = MQ.MathField(UIElements.mqInput, {
     restrictMismatchedBrackets: true,
     autoCommands: 'pi sqrt Gamma',
