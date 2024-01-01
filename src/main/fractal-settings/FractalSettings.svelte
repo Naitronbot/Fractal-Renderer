@@ -1,6 +1,7 @@
 <script lang="ts">
-  import "https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js";
-  import "/mathquill/mathquill-basic.min.js";
+  import MathField from "src/common/math-field/MathField.svelte";
 </script>
+
+<MathField />
 
 <link rel="stylesheet" href="./FractalSettings.css" />

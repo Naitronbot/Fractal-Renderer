@@ -29,5 +29,5 @@
     "no-var": 2,
     "prefer-const": 2
   },
-  "ignorePatterns": ["svelte.config.js", "vite.config.ts", "*.css"]
+  "ignorePatterns": ["/*", "!/src"]
 }
