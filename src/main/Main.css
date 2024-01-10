@@ -2,23 +2,21 @@ main {
   width: 100%;
   height: 100%;
   display: grid;
-  grid-template-columns: minmax(15rem, 1fr) 4fr;
-  grid-template-rows: 3fr 1fr;
+  grid-template-columns: minmax(15rem, 1fr) 4fr minmax(15rem, 1fr);
+  grid-template-rows: 6rem 1fr;
   grid-template-areas:
-    "sidebar fractal"
-    "sidebar settings";
+    "topbar topbar topbar"
+    "leftbar fractal rightbar";
 }
 
-main.mobile {
-  grid-template-rows: 3fr 2fr;
-  grid-template-areas:
-    "fractal fractal"
-    "settings settings";
+#topBar {
+  background-color: orange;
+  grid-area: topbar;
 }
 
 #sidebar {
   background-color: red;
-  grid-area: sidebar;
+  grid-area: leftbar;
 }
 
 #fractalWindow {
@@ -28,5 +26,5 @@ main.mobile {
 
 #fractalSettings {
   background-color: blue;
-  grid-area: settings;
+  grid-area: rightbar;
 }

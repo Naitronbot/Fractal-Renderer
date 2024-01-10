@@ -4,4 +4,4 @@
 
 <MathField />
 
-<link rel="stylesheet" href="./FractalSettings.css" />
+<style src="./TopBar.css"></style>
