@@ -1,20 +1,22 @@
 <script lang="ts">
-  import Sidebar from "./sidebar/Sidebar.svelte";
+  import SlidersBar from "./sliders-bar/SlidersBar.svelte";
   import FractalWindow from "./fractal-window/FractalWindow.svelte";
-  import FractalSettings from "./fractal-settings/FractalSettings.svelte";
-
-  let mainWidth: number;
+  import TopBar from "./top-bar/TopBar.svelte";
+  import SettingsBar from "./settings-bar/SettingsBar.svelte";
 </script>
 
-<main bind:clientWidth={mainWidth} class={mainWidth <= 750 ? "mobile" : ""}>
+<main>
+  <div id="topBar">
+    <TopBar />
+  </div>
   <aside id="sidebar">
-    <Sidebar />
+    <SlidersBar />
   </aside>
   <div id="fractalWindow">
     <FractalWindow />
   </div>
-  <div id="fractalSettings">
-    <FractalSettings />
+  <div id="settingsBar">
+    <SettingsBar />
   </div>
 </main>
 
