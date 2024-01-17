@@ -1,9 +1,16 @@
-import Main from "./main/Main.svelte";
-import "./main/global.css";
+import FractalRenderer from "./main/Main.svelte";
+import "./global.css";
 import "mathquill/mathquill-basic.css";
 
-const main = new Main({
+const fractal = new FractalRenderer({
   target: document.getElementById("Main")!,
 });
 
-export default main;
+declare global {
+  interface Window {
+    fractalRenderer: FractalRenderer;
+  }
+}
+window.fractalRenderer = fractal;
+
+export default fractal;

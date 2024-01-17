@@ -29,5 +29,5 @@
     "no-var": 2,
     "prefer-const": 2
   },
-  "ignorePatterns": ["/*", "!/src"]
+  "ignorePatterns": ["/test/**/*.ts", "/mathquill/**/*.ts", "vite.config.ts"]
 }
