@@ -1,8 +1,10 @@
 <script lang="ts">
   import SlidersBar from "./sliders-bar/SlidersBar.svelte";
   import FractalWindow from "./fractal-window/FractalWindow.svelte";
-  import FractalSettings from "./fractal-settings/FractalSettings.svelte";
   import TopBar from "./top-bar/TopBar.svelte";
+  import SettingsBar from "./settings-bar/SettingsBar.svelte";
+
+  export const fractalState = {};
 </script>
 
 <main>
@@ -15,8 +17,8 @@
   <div id="fractalWindow">
     <FractalWindow />
   </div>
-  <div id="fractalSettings">
-    <FractalSettings />
+  <div id="settingsBar">
+    <SettingsBar />
   </div>
 </main>
 

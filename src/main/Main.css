@@ -7,6 +7,17 @@ main {
   grid-template-areas:
     "topbar topbar topbar"
     "leftbar fractal rightbar";
+  font-family: sans-serif;
+
+  --primary-color: #242424;
+  --secondary-color: #111111;
+  --accent-color: #29aaff;
+  --text-color: #ffffff;
+}
+
+main :global(*) {
+  box-sizing: border-box;
+  color: var(--text-color);
 }
 
 #topBar {
@@ -24,7 +35,7 @@ main {
   grid-area: fractal;
 }
 
-#fractalSettings {
-  background-color: blue;
+#settingsBar {
+  background-color: var(--primary-color);
   grid-area: rightbar;
 }
