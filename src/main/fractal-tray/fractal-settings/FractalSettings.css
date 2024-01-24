@@ -1,0 +1,16 @@
+.settings-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 3fr;
+  height: 100%;
+  width: 100%;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar button {
+  font-size: 20px;
+  flex: 1;
+}
