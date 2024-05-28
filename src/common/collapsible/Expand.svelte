@@ -4,7 +4,7 @@
   export let open = false;
 
   const rot = tweened(-90, { duration: 100, delay: 0 });
-  $: rot.set(+!open * -90);
+  $: void rot.set(+!open * -90);
 </script>
 
 <svg
