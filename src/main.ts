@@ -1,5 +1,5 @@
 import FractalRenderer from "./main/Main.svelte";
-import "./main/global.css";
+import "./global.css";
 import "mathquill/mathquill-basic.css";
 
 const fractal = new FractalRenderer({

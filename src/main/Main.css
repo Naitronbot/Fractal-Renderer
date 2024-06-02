@@ -9,6 +9,10 @@ main {
     "sidebar settings";
 }
 
+main :global(*) {
+  box-sizing: border-box;
+}
+
 main.mobile {
   grid-template-rows: 3fr 2fr;
   grid-template-areas:
