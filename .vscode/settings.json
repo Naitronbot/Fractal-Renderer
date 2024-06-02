@@ -1,4 +1,7 @@
 {
   "eslint.validate": ["javascript", "typescript", "svelte"],
-  "svelte.enable-ts-plugin": true
+  "eslint.workingDirectories": ["."],
+  "svelte.enable-ts-plugin": true,
+  "editor.indentSize": 2,
+  "files.eol": "\n"
 }
