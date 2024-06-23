@@ -1,0 +1,28 @@
+.slider-wrapper {
+  position: relative;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin: 0 6px 0 6px;
+}
+
+.slider-bar {
+  box-sizing: content-box;
+  width: 100%;
+  height: 2px;
+  background-color: rgb(255, 255, 255);
+  border-radius: 10px;
+}
+
+.slider-knob {
+  position: absolute;
+  top: 50%;
+  border-radius: 15px;
+  width: 15px;
+  height: 15px;
+  background-color: var(--accent-color);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}

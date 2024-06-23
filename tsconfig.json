@@ -107,6 +107,6 @@
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
     "skipLibCheck": true                                 /* Skip type checking all .d.ts files. */
   },
-  "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.svelte", "test/**/*.spec.ts"],
+  "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.svelte", "test/**/*.ts", "test/**/*.spec.svelte"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

@@ -11,6 +11,7 @@ export default mergeConfig(
         name: "chromium",
         headless: true,
       },
+      setupFiles: ["./test/vitest.setup.ts"],
     },
   }),
 );

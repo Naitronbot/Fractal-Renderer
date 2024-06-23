@@ -1,0 +1,29 @@
+input {
+  background-color: var(--secondary-color);
+  border: none;
+  border-radius: 5px;
+}
+
+.slider {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  grid-template-columns: 3fr 1fr;
+  gap: 10px;
+  grid-template-areas:
+    "text nothing"
+    "slider input";
+}
+
+h3 {
+  grid-area: text;
+  margin: 0;
+}
+
+.slider > :global(div) {
+  grid-area: slider;
+}
+
+input {
+  width: 100%;
+  grid-area: input;
+}
