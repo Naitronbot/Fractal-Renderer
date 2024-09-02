@@ -36,6 +36,6 @@ main :global(*) {
 }
 
 #settingsBar {
-  background-color: blue;
+  background-color: var(--primary-color);
   grid-area: rightbar;
 }

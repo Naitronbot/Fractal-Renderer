@@ -27,7 +27,7 @@
     <FractalWindow />
   </div>
   <div id="settingsBar">
-    <SettingsBar />
+    <SettingsBar bind:fractalState />
   </div>
 </main>
 
