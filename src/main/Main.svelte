@@ -3,6 +3,17 @@
   import FractalWindow from "./fractal-window/FractalWindow.svelte";
   import TopBar from "./top-bar/TopBar.svelte";
   import SettingsBar from "./settings-bar/SettingsBar.svelte";
+  import { FractalState } from "./FractalState";
+
+  let fractalState = new FractalState();
+
+  export function getState(): FractalState {
+    return structuredClone(fractalState);
+  }
+
+  export function setState(state: Partial<FractalState>) {
+    fractalState = new FractalState(state);
+  }
 </script>
 
 <main>
